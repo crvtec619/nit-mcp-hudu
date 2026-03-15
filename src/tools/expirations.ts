@@ -27,6 +27,8 @@ export function register(server: McpServer, env: Env) {
             expiration_type: args.expiration_type,
             resource_id: args.resource_id,
             resource_type: args.resource_type,
+            archived: args.archived,
+            page_size: args.page_size,
           },
           args.page
         );

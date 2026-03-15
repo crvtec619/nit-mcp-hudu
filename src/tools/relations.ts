@@ -22,7 +22,7 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduRelation>(
           env,
           "relations",
-          {},
+          { page_size: args.page_size },
           args.page
         );
 

@@ -22,7 +22,11 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduFolder>(
           env,
           "folders",
-          { company_id: args.company_id },
+          {
+            name: args.name,
+            company_id: args.company_id,
+            page_size: args.page_size,
+          },
           args.page
         );
 

@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_websites",
     {
       description:
-        "List monitored websites in Hudu. Filter by name. Hudu tracks DNS, SSL, and WHOIS monitoring for these sites. Returns 25 per page.",
+        "Search and list monitored websites in Hudu. Use 'search' for fuzzy keyword matching, or filter by exact name. Hudu tracks DNS, SSL, and WHOIS monitoring for these sites.",
       inputSchema: listWebsitesSchema,
       annotations: {
         readOnlyHint: true,
@@ -22,7 +22,13 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduWebsite>(
           env,
           "websites",
-          { name: args.name },
+          {
+            search: args.search,
+            name: args.name,
+            slug: args.slug,
+            updated_at: args.updated_at,
+            page_size: args.page_size,
+          },
           args.page
         );
 

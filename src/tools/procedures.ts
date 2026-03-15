@@ -22,7 +22,14 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduProcedure>(
           env,
           "procedures",
-          { name: args.name, company_id: args.company_id },
+          {
+            name: args.name,
+            company_id: args.company_id,
+            slug: args.slug,
+            global_template: args.global_template,
+            parent_procedure_id: args.parent_procedure_id,
+            page_size: args.page_size,
+          },
           args.page
         );
 

@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_companies",
     {
       description:
-        "List companies in Hudu. Filter by name, phone, website, city, or state. Returns 25 results per page.",
+        "Search and list companies in Hudu. Use 'search' for fuzzy keyword matching (e.g. 'Viking'), or filter by exact name, phone, website, city, state, slug, or integration ID. Returns 25 results per page by default.",
       inputSchema: listCompaniesSchema,
       annotations: {
         readOnlyHint: true,
@@ -23,12 +23,17 @@ export function register(server: McpServer, env: Env) {
           env,
           "companies",
           {
+            search: args.search,
             name: args.name,
-            phone: args.phone,
+            phone_number: args.phone,
             website: args.website,
             city: args.city,
             state: args.state,
+            slug: args.slug,
+            id_number: args.id_number,
             id_in_integration: args.id_in_integration,
+            updated_at: args.updated_at,
+            page_size: args.page_size,
           },
           args.page
         );

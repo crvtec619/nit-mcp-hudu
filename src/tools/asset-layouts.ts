@@ -22,7 +22,12 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduAssetLayout>(
           env,
           "asset_layouts",
-          { name: args.name },
+          {
+            name: args.name,
+            slug: args.slug,
+            active: args.active,
+            updated_at: args.updated_at,
+          },
           args.page
         );
 

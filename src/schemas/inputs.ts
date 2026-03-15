@@ -3,13 +3,18 @@ import { z } from "zod";
 // ---- Companies ----
 
 export const listCompaniesSchema = z.object({
-  name: z.string().optional().describe("Filter companies by name (partial match)"),
+  search: z.string().optional().describe("Search companies by keyword (fuzzy match across name and other fields). Use this for partial/natural-language lookups like 'Viking'."),
+  name: z.string().optional().describe("Filter companies by exact name match. For partial lookups, use 'search' instead."),
   phone: z.string().optional().describe("Filter by phone number"),
   website: z.string().optional().describe("Filter by website URL"),
   city: z.string().optional().describe("Filter by city"),
   state: z.string().optional().describe("Filter by state"),
-  id_in_integration: z.string().optional().describe("Filter by external integration ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  id_number: z.string().optional().describe("Filter by company id_number"),
+  id_in_integration: z.string().optional().describe("Filter by external integration ID (PSA/RMM identifier)"),
+  updated_at: z.string().optional().describe("Filter companies updated within a range or at an exact time (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getCompanySchema = z.object({
@@ -19,11 +24,16 @@ export const getCompanySchema = z.object({
 // ---- Assets ----
 
 export const listAssetsSchema = z.object({
-  company_id: z.coerce.number().int().positive().optional().describe("Filter assets by company ID. If set, uses the company-scoped endpoint."),
-  name: z.string().optional().describe("Filter assets by name (partial match)"),
-  asset_layout_id: z.coerce.number().int().positive().optional().describe("Filter by asset layout ID"),
-  archived: z.boolean().optional().describe("Include archived assets if true"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  search: z.string().optional().describe("Search assets by keyword (fuzzy match). Use this for partial/natural-language lookups. Only works with the global /assets endpoint (not company-scoped)."),
+  company_id: z.coerce.number().int().positive().optional().describe("Filter assets by company ID. If set, uses the company-scoped endpoint (which has limited filtering)."),
+  name: z.string().optional().describe("Filter assets by exact name. For partial lookups, use 'search' instead. Only works with global /assets endpoint."),
+  primary_serial: z.string().optional().describe("Filter assets by primary serial number. Only works with global /assets endpoint."),
+  asset_layout_id: z.coerce.number().int().positive().optional().describe("Filter by asset layout ID. Only works with global /assets endpoint."),
+  archived: z.boolean().optional().describe("Show only archived assets if true"),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  updated_at: z.string().optional().describe("Filter assets updated within a range or at an exact time (ISO format: 'start,end' or 'exact')"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getAssetSchema = z.object({
@@ -35,7 +45,10 @@ export const getAssetSchema = z.object({
 
 export const listAssetLayoutsSchema = z.object({
   name: z.string().optional().describe("Filter asset layouts by name"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  active: z.boolean().optional().describe("Filter by active status (true = active layouts only)"),
+  updated_at: z.string().optional().describe("Filter layouts updated within a range or at an exact time (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
 });
 
 export const getAssetLayoutSchema = z.object({
@@ -45,9 +58,14 @@ export const getAssetLayoutSchema = z.object({
 // ---- Articles (Knowledge Base in UI) ----
 
 export const listArticlesSchema = z.object({
-  name: z.string().optional().describe("Filter articles by name (partial match)"),
+  search: z.string().optional().describe("Search articles by keyword (fuzzy match). Use this for partial/natural-language lookups."),
+  name: z.string().optional().describe("Filter articles by exact name. For partial lookups, use 'search' instead."),
   company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID. Omit for global KB articles."),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  draft: z.boolean().optional().describe("Filter by draft status (true = drafts only, false = published only)"),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  updated_at: z.string().optional().describe("Filter articles updated within a range or at an exact time (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getArticleSchema = z.object({
@@ -58,17 +76,23 @@ export const getArticleSchema = z.object({
 
 export const listExpirationsSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter expirations by company ID"),
-  expiration_type: z.string().optional().describe("Filter by type (e.g. 'domain', 'ssl_certificate', 'warranty')"),
-  resource_id: z.coerce.number().int().positive().optional().describe("Filter by the expirable resource ID"),
-  resource_type: z.string().optional().describe("Filter by the expirable resource type"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  expiration_type: z.string().optional().describe("Filter by type: 'domain', 'ssl_certificate', 'warranty', 'asset_field', 'article_expiration', or 'undeclared'"),
+  resource_id: z.coerce.number().int().positive().optional().describe("Filter by resource ID (must be used with resource_type)"),
+  resource_type: z.string().optional().describe("Filter by resource type e.g. 'Asset', 'AssetPassword', 'Company', 'Article' (must be used with resource_id)"),
+  archived: z.boolean().optional().describe("Filter by archived status (true = archived, false = active, default false)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Websites ----
 
 export const listWebsitesSchema = z.object({
-  name: z.string().optional().describe("Filter websites by name (partial match)"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  search: z.string().optional().describe("Search websites by keyword (fuzzy match). Use this for partial/natural-language lookups."),
+  name: z.string().optional().describe("Filter websites by exact name. For partial lookups, use 'search' instead."),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  updated_at: z.string().optional().describe("Filter websites updated within a range or at an exact time (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getWebsiteSchema = z.object({
@@ -80,7 +104,11 @@ export const getWebsiteSchema = z.object({
 export const listProceduresSchema = z.object({
   name: z.string().optional().describe("Filter procedures by name"),
   company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  slug: z.string().optional().describe("Filter by URL slug"),
+  global_template: z.enum(["true", "false"]).optional().describe("Filter for global templates ('true') vs company-specific procedures ('false')"),
+  parent_procedure_id: z.coerce.number().int().positive().optional().describe("Filter for child procedures of a specific parent procedure"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getProcedureSchema = z.object({
@@ -92,18 +120,21 @@ export const getProcedureSchema = z.object({
 export const listActivityLogsSchema = z.object({
   user_id: z.coerce.number().int().positive().optional().describe("Filter logs by user ID"),
   user_email: z.string().optional().describe("Filter logs by user email"),
-  resource_id: z.coerce.number().int().positive().optional().describe("Filter by resource ID"),
-  resource_type: z.string().optional().describe("Filter by resource type (e.g. 'Asset', 'Company', 'Article')"),
+  resource_id: z.coerce.number().int().positive().optional().describe("Filter by resource ID (must be used with resource_type)"),
+  resource_type: z.string().optional().describe("Filter by resource type e.g. 'Asset', 'AssetPassword', 'Company', 'Article' (must be used with resource_id)"),
   action_message: z.string().optional().describe("Filter by action message"),
-  start_date: z.string().optional().describe("Filter logs from this date (ISO format: YYYY-MM-DD)"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  start_date: z.string().optional().describe("Filter logs from this date (ISO 8601 format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Folders ----
 
 export const listFoldersSchema = z.object({
+  name: z.string().optional().describe("Filter folders by name"),
   company_id: z.coerce.number().int().positive().optional().describe("Filter folders by company ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Users and Groups ----
@@ -119,7 +150,8 @@ export const listGroupsSchema = z.object({
 // ---- Relations ----
 
 export const listRelationsSchema = z.object({
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Networks (Phase 3, schemas defined now) ----

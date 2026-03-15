@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_articles",
     {
       description:
-        "List Knowledge Base articles in Hudu. Filter by name or company_id. Articles without a company_id are global KB entries. Returns 25 per page. Note: 'Articles' in the API correspond to 'Knowledge Base Articles' in the Hudu UI.",
+        "Search and list Knowledge Base articles in Hudu. Use 'search' for fuzzy keyword matching, or filter by exact name, company_id, draft status, etc. Articles without a company_id are global KB entries. Note: 'Articles' in the API = 'Knowledge Base Articles' in the Hudu UI.",
       inputSchema: listArticlesSchema,
       annotations: {
         readOnlyHint: true,
@@ -22,7 +22,15 @@ export function register(server: McpServer, env: Env) {
         const data = await huduFetchPaged<HuduArticle>(
           env,
           "articles",
-          { name: args.name, company_id: args.company_id },
+          {
+            search: args.search,
+            name: args.name,
+            company_id: args.company_id,
+            draft: args.draft,
+            slug: args.slug,
+            updated_at: args.updated_at,
+            page_size: args.page_size,
+          },
           args.page
         );
 

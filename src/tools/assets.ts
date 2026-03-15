@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_assets",
     {
       description:
-        "List assets in Hudu. Optionally filter by company_id (recommended for targeted lookups), asset_layout_id, or name. Without company_id, returns assets across all companies. Returns 25 results per page.",
+        "Search and list assets in Hudu. Use 'search' for fuzzy keyword matching, or filter by exact name, company_id, asset_layout_id, serial number, etc. With company_id, uses the company-scoped endpoint (limited filters). Without company_id, uses the global endpoint (all filters available).",
       inputSchema: listAssetsSchema,
       annotations: {
         readOnlyHint: true,
@@ -24,11 +24,23 @@ export function register(server: McpServer, env: Env) {
           ? `companies/${args.company_id}/assets`
           : "assets";
 
-        const params: Record<string, string | number | boolean | undefined> = {
-          name: args.name,
-          asset_layout_id: args.asset_layout_id,
-          archived: args.archived,
-        };
+        // Company-scoped endpoint has limited filtering (archived, page_size only)
+        // Global endpoint supports search, name, serial, layout, slug, updated_at
+        const params: Record<string, string | number | boolean | undefined> = args.company_id
+          ? {
+              archived: args.archived,
+              page_size: args.page_size,
+            }
+          : {
+              search: args.search,
+              name: args.name,
+              primary_serial: args.primary_serial,
+              asset_layout_id: args.asset_layout_id,
+              archived: args.archived,
+              slug: args.slug,
+              updated_at: args.updated_at,
+              page_size: args.page_size,
+            };
 
         const data = await huduFetchPaged<HuduAsset>(
           env,

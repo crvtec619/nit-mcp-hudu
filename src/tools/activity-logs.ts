@@ -29,6 +29,7 @@ export function register(server: McpServer, env: Env) {
             resource_type: args.resource_type,
             action_message: args.action_message,
             start_date: args.start_date,
+            page_size: args.page_size,
           },
           args.page
         );
