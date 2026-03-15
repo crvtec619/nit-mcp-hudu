@@ -1,0 +1,6 @@
+# Local development secrets for wrangler dev
+# Do NOT commit this file (it's in .gitignore)
+
+HUDU_API_KEY=PASTE_YOUR_HUDU_API_KEY
+ENTRA_CLIENT_ID=PASTE_YOUR_ENTRA_CLIENT_ID
+ENTRA_CLIENT_SECRET=PASTE_YOUR_ENTRA_CLIENT_SECRET

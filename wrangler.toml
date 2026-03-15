@@ -1,0 +1,26 @@
+name = "nit-mcp-hudu"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+HUDU_BASE_URL = "https://docs.networkzit.com/api/v1"
+ENTRA_TENANT_ID = "6c9b4558-affd-4a18-9494-fb95f1ed92d1"
+
+# Secrets (push via: wrangler secret put <NAME>):
+# HUDU_API_KEY
+# ENTRA_CLIENT_ID
+# ENTRA_CLIENT_SECRET
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "d9b8b556d4494eecaef4a5529e925297"
+
+[durable_objects]
+bindings = [
+  { name = "MCP_OBJECT", class_name = "HuduMcp" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HuduMcp"]
