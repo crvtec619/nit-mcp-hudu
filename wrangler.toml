@@ -2,6 +2,7 @@ name = "nit-mcp-hudu"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "7ac71ffa8a171e8755646124094cb9f3"
 
 [vars]
 HUDU_BASE_URL = "https://docs.networkzit.com/api/v1"
