@@ -7,7 +7,7 @@ function safeJsonParse<T>(text: string, endpoint: string): T {
   try {
     return JSON.parse(text) as T;
   } catch {
-    console.error(`[hudu] Non-JSON response for ${endpoint}: ${text.slice(0, 500)}`);
+    console.error(`[hudu] Non-JSON response for ${endpoint} (${text.length} bytes)`);
     throw new Error(
       `Hudu returned a non-JSON response for ${endpoint}. The server may be under maintenance.`
     );
@@ -58,7 +58,7 @@ export async function huduFetch<T>(
   }
 
   if (!response.ok) {
-    console.error(`[hudu] API error ${response.status} ${endpoint}: ${text.slice(0, 500)}`);
+    console.error(`[hudu] API error ${response.status} for ${endpoint}`);
     throw new Error(
       `Hudu API request failed (${response.status}) for ${endpoint}. Check the resource ID and try again.`
     );
@@ -105,7 +105,7 @@ export async function huduMutate<T>(
   }
 
   if (!response.ok) {
-    console.error(`[hudu] API error ${response.status} ${method} ${endpoint}: ${text.slice(0, 500)}`);
+    console.error(`[hudu] API error ${response.status} for ${method} ${endpoint}`);
     throw new Error(
       `Hudu API request failed (${response.status}) for ${method} ${endpoint}. Check the resource ID and try again.`
     );

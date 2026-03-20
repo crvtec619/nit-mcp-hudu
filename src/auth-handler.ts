@@ -23,6 +23,73 @@ function getRequiredEnv(env: Bindings, key: keyof Bindings): string {
   return value;
 }
 
+// ---- HMAC helpers for signing OAuth state (CSRF protection) ----
+
+function toBase64Url(buf: Uint8Array): string {
+  return btoa(String.fromCharCode(...buf))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function fromBase64Url(s: string): Uint8Array {
+  const raw = s.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = raw.padEnd(raw.length + (4 - (raw.length % 4)) % 4, "=");
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function getHmacKey(secret: string): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+/**
+ * Sign the state payload with HMAC-SHA256 and return "payload.signature".
+ * Prevents CSRF by ensuring the callback state was issued by this worker.
+ */
+async function signState(payload: string, secret: string): Promise<string> {
+  const payloadB64 = toBase64Url(new TextEncoder().encode(payload));
+  const key = await getHmacKey(secret);
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64))
+  );
+  return `${payloadB64}.${toBase64Url(sig)}`;
+}
+
+/**
+ * Verify and decode the signed state. Returns null if signature is invalid.
+ */
+async function verifyState(state: string, secret: string): Promise<string | null> {
+  const dotIdx = state.lastIndexOf(".");
+  if (dotIdx === -1) return null;
+
+  const payloadB64 = state.slice(0, dotIdx);
+  const sigB64 = state.slice(dotIdx + 1);
+
+  const key = await getHmacKey(secret);
+  const sigBytes = fromBase64Url(sigB64);
+  const valid = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    sigBytes,
+    new TextEncoder().encode(payloadB64)
+  );
+
+  if (!valid) return null;
+
+  return new TextDecoder().decode(fromBase64Url(payloadB64));
+}
+
 // Health check
 app.get("/", (c) => {
   return c.json({ server: "hudu-mcp", version: "1.0.0" });
@@ -32,6 +99,7 @@ app.get("/", (c) => {
 app.get("/authorize", async (c) => {
   const tenantId = getRequiredEnv(c.env, "ENTRA_TENANT_ID");
   const clientId = getRequiredEnv(c.env, "ENTRA_CLIENT_ID");
+  const clientSecret = getRequiredEnv(c.env, "ENTRA_CLIENT_SECRET");
 
   const oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
   if (!oauthReqInfo.clientId) {
@@ -40,10 +108,7 @@ app.get("/authorize", async (c) => {
 
   const nonce = crypto.randomUUID();
   const statePayload = JSON.stringify({ oauthReq: oauthReqInfo, nonce });
-  const state = btoa(statePayload)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  const state = await signState(statePayload, clientSecret);
 
   const entraAuthorizeUrl = new URL(
     `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`
@@ -70,19 +135,25 @@ app.get("/callback", async (c) => {
   const error = c.req.query("error");
 
   if (error) {
-    const desc = c.req.query("error_description") || error;
-    return c.text(`Entra ID error: ${desc}`, 400);
+    // Do not reflect Entra ID error_description to the user (info disclosure)
+    console.error(`[auth] Entra ID returned error: ${error}`);
+    return c.text("Authentication failed. Please try again or contact your administrator.", 400);
   }
 
   if (!code || !stateParam) {
     return c.text("Missing code or state parameter", 400);
   }
 
+  // Verify HMAC signature on state to prevent CSRF / state tampering
+  const rawPayload = await verifyState(stateParam, clientSecret);
+  if (!rawPayload) {
+    console.error("[auth] State HMAC verification failed — possible CSRF attempt");
+    return c.text("Invalid or tampered state parameter", 400);
+  }
+
   let statePayload: { oauthReq: AuthRequest; nonce: string };
   try {
-    const raw = stateParam.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = raw.padEnd(raw.length + (4 - (raw.length % 4)) % 4, "=");
-    statePayload = JSON.parse(atob(padded));
+    statePayload = JSON.parse(rawPayload);
   } catch {
     return c.text("Invalid state parameter", 400);
   }
@@ -108,8 +179,8 @@ app.get("/callback", async (c) => {
   });
 
   if (!tokenResponse.ok) {
-    const text = await tokenResponse.text();
-    console.error(`[auth] Token exchange failed (${tokenResponse.status}): ${text}`);
+    // Log status only — do not log response body (may contain tokens or secrets)
+    console.error(`[auth] Token exchange failed (${tokenResponse.status})`);
     return c.text("Authentication failed. Please try again or contact your administrator.", 502);
   }
 
@@ -124,8 +195,7 @@ app.get("/callback", async (c) => {
   });
 
   if (!graphResponse.ok) {
-    const text = await graphResponse.text();
-    console.error(`[auth] Graph API failed (${graphResponse.status}): ${text}`);
+    console.error(`[auth] Graph API failed (${graphResponse.status})`);
     return c.text("Failed to retrieve user profile. Please try again or contact your administrator.", 502);
   }
 
