@@ -483,3 +483,19 @@ export function formatMagicDashList(widgets: HuduMagicDash[]): string {
     ...rows,
   ].join("\n");
 }
+
+export function formatMagicDashResult(m: HuduMagicDash): string {
+  const lines: string[] = [
+    `**Magic Dash widget saved** (id: ${m.id})`,
+    "",
+    `- **Company:** ${esc(m.company_name)} (${m.company_id ?? "—"})`,
+    `- **Title:** ${esc(m.title)}`,
+  ];
+  if (m.shade) lines.push(`- **Shade:** ${m.shade}`);
+  if (m.icon) lines.push(`- **Icon:** ${m.icon}`);
+  if (m.content_link) lines.push(`- **Link:** ${m.content_link}`);
+  if (m.image_url) lines.push(`- **Image:** ${m.image_url}`);
+  if (m.content) lines.push(`- **Content:** ${m.content.length} chars`);
+  if (m.position) lines.push(`- **Position:** ${m.position}`);
+  return lines.join("\n");
+}

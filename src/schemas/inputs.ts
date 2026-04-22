@@ -227,14 +227,30 @@ export const listMagicDashSchema = z.object({
 });
 
 export const createMagicDashSchema = z.object({
-  title: z.string().describe("Magic Dash widget title"),
-  company_name: z.string().optional().describe("Company name to associate the widget with"),
-  message: z.string().optional().describe("Widget message/body text"),
-  icon: z.string().optional().describe("FontAwesome icon class (e.g. 'fas fa-ticket-alt')"),
-  image_url: z.string().optional().describe("URL to an image for the widget"),
-  content_link: z.string().optional().describe("URL the widget links to when clicked"),
-  content: z.string().optional().describe("HTML content for the widget body"),
-  shade: z.string().optional().describe("Widget color shade: 'success', 'warning', 'danger', or 'info'"),
+  company_id: z.coerce.number().int().positive().describe(
+    "Company ID to attach the Magic Dash widget to. The tool internally looks up the company's name (Hudu's /magic_dash endpoint quirkily requires company_name on the request body). Restricted to allowlisted users in production."
+  ),
+  title: z.string().min(1).max(200).describe(
+    "Widget title. Hudu upserts by (title, company_id) — reusing a title replaces the existing widget's body."
+  ),
+  message: z.string().min(1).max(5000).describe(
+    "Widget summary line. Plain text or HTML."
+  ),
+  shade: z.enum(["success", "info", "warning", "danger"]).optional().describe(
+    "Color shade. Defaults to Hudu's own default if omitted."
+  ),
+  icon: z.string().max(100).optional().describe(
+    "Font Awesome icon class (e.g. 'fas fa-sticky-note')."
+  ),
+  content_link: z.string().url().max(1000).optional().describe(
+    "Optional URL the widget title points to when clicked."
+  ),
+  content: z.string().max(50000).optional().describe(
+    "Optional expanded HTML body shown when the widget is opened. Distinct from 'message' (the summary line)."
+  ),
+  image_url: z.string().url().max(1000).optional().describe(
+    "Optional image URL displayed on the widget (e.g. a logo or screenshot)."
+  ),
 });
 
 export const deleteMagicDashSchema = z.object({

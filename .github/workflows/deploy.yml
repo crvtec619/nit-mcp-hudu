@@ -52,3 +52,4 @@ jobs:
           echo "${{ secrets.HUDU_API_KEY }}" | npx wrangler secret put HUDU_API_KEY
           echo "${{ secrets.ENTRA_CLIENT_ID }}" | npx wrangler secret put ENTRA_CLIENT_ID
           echo "${{ secrets.ENTRA_CLIENT_SECRET }}" | npx wrangler secret put ENTRA_CLIENT_SECRET
+          echo "${{ secrets.HUDU_WRITE_ALLOWLIST }}" | npx wrangler secret put HUDU_WRITE_ALLOWLIST

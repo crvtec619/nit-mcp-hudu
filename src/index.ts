@@ -11,13 +11,21 @@ export type Props = {
 };
 
 const apiHandler = {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // @cloudflare/workers-oauth-provider attaches the authenticated user's
+    // Props (set in auth-handler.ts via completeAuthorization) to ctx.props
+    // before forwarding to the API handler. Inject the caller's email into
+    // a scoped env so write tools can enforce per-user gates without
+    // plumbing extra args through registerAllTools.
+    const props = (ctx as unknown as { props?: Props }).props;
+    const scopedEnv = { ...env, CALLER_EMAIL: props?.email ?? "" } as Env;
+
     const server = new McpServer({
       name: "hudu-mcp",
       version: "1.0.0",
     });
 
-    registerAllTools(server, env);
+    registerAllTools(server, scopedEnv);
 
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,

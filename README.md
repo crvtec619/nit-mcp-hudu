@@ -33,6 +33,18 @@ All tools are read-only against Hudu:
 
 Hudu API quirks to note: `Article` = KB Article (in the UI); `Procedure` = Process (in the UI).
 
+## Production write tools
+
+Write tools are **restricted to an email allowlist**. Each call checks the authenticated Entra user's email (set in `ctx.props` during OAuth completion) against the comma-separated `HUDU_WRITE_ALLOWLIST` Cloudflare secret. Unauthorized calls return a friendly error and never reach the Hudu API.
+
+Currently available in production:
+
+- `hudu_create_magic_dash` — create/update a Magic Dash widget on a company page. Upserts by `(title, company_id)`.
+
+To add a user to the allowlist: update the `HUDU_WRITE_ALLOWLIST` GitHub repo secret (comma-separated emails) and push to `main` to redeploy. To revoke: remove the email and redeploy — or set the secret to an empty string for an immediate "everyone locked out" state (the tool remains registered but rejects every call).
+
+Audit trail: every attempted invocation logs `email=<sha256-16-hex>` to Grafana — emails are hashed so Grafana never sees raw PII, but patterns remain correlatable. Successful calls also log `company=<id>`, `title=<first-50-chars>`, and the created widget's `id`.
+
 ## Repository layout
 
 ```
