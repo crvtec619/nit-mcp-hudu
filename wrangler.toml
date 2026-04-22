@@ -17,14 +17,16 @@ ENTRA_TENANT_ID = "6c9b4558-affd-4a18-9494-fb95f1ed92d1"
 binding = "OAUTH_KV"
 id = "d9b8b556d4494eecaef4a5529e925297"
 
-[durable_objects]
-bindings = [
-  { name = "MCP_OBJECT", class_name = "HuduMcp" }
-]
-
+# Clean up the Durable Object class that was previously deployed with the
+# agents/McpAgent pattern. We now use WebStandardStreamableHTTPServerTransport
+# directly, so the DO and its SQLite storage are no longer needed.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["HuduMcp"]
+
+[[migrations]]
+tag = "v2"
+deleted_classes = ["HuduMcp"]
 
 [observability.traces]
 enabled = true

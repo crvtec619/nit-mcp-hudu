@@ -1,6 +1,6 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { registerAllTools } from "./tools/index";
 import { AuthHandler } from "./auth-handler";
 
@@ -10,20 +10,34 @@ export type Props = {
   entraId: string;
 };
 
-export class HuduMcp extends McpAgent<Env, {}, Props> {
-  server = new McpServer({
-    name: "hudu-mcp",
-    version: "1.0.0",
-  });
+const apiHandler = {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+    const server = new McpServer({
+      name: "hudu-mcp",
+      version: "1.0.0",
+    });
 
-  async init() {
-    registerAllTools(this.server, this.env);
-  }
-}
+    registerAllTools(server, env);
+
+    const transport = new WebStandardStreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+
+    await server.connect(transport);
+
+    try {
+      return await transport.handleRequest(request);
+    } finally {
+      await transport.close();
+      await server.close();
+    }
+  },
+};
 
 export default new OAuthProvider({
   apiRoute: "/mcp",
-  apiHandler: HuduMcp.serve("/mcp"),
+  apiHandler,
   defaultHandler: AuthHandler,
   authorizeEndpoint: "/authorize",
   tokenEndpoint: "/token",
