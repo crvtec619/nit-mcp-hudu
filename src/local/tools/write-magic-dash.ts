@@ -1,16 +1,31 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createMagicDashSchema, deleteMagicDashSchema } from "../schemas/inputs";
-import { huduMutate } from "../../api-client";
+import { huduFetch, huduMutate } from "../../api-client";
 import { formatMagicDashResult, formatMagicDashDeleteResult } from "../formatters/markdown";
-import type { HuduMagicDash } from "../../types";
+import type { HuduCompany, HuduMagicDash } from "../../types";
 import { assertSandboxCompany, type LocalEnv } from "./guards";
+
+// Hudu's POST /magic_dash requires company_name (not company_id) in the body.
+// We accept company_id on the public schema to stay consistent with every
+// other tool and look up the name here.
+async function lookupCompanyName(env: LocalEnv, companyId: number): Promise<string> {
+  const raw = await huduFetch<{ company: HuduCompany } | HuduCompany>(
+    env,
+    `companies/${companyId}`
+  );
+  const company = (raw as { company?: HuduCompany }).company ?? (raw as HuduCompany);
+  if (!company?.name) {
+    throw new Error(`Hudu company ${companyId} has no name; cannot POST magic_dash.`);
+  }
+  return company.name;
+}
 
 export function register(server: McpServer, env: LocalEnv) {
   server.registerTool(
     "hudu_create_magic_dash",
     {
       description:
-        "Create or update a Magic Dash widget on a company's page in Hudu. Upserts by (title, company_id) — reusing a title replaces the existing widget's body. Local-dev only: company_id must equal HUDU_TEST_COMPANY_ID.",
+        "Create or update a Magic Dash widget on a company's page in Hudu. Upserts by (title, company_name) — reusing a title replaces the existing widget's body. Local-dev only: company_id must equal HUDU_TEST_COMPANY_ID.",
       inputSchema: createMagicDashSchema,
       annotations: {
         readOnlyHint: false,
@@ -22,9 +37,11 @@ export function register(server: McpServer, env: LocalEnv) {
       try {
         assertSandboxCompany(args.company_id, env);
 
+        const companyName = await lookupCompanyName(env, args.company_id);
+
         const body: Record<string, unknown> = {
           title: args.title,
-          company_id: args.company_id,
+          company_name: companyName,
           message: args.message,
         };
         if (args.shade !== undefined) body.shade = args.shade;

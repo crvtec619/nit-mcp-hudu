@@ -10,7 +10,8 @@ export function formatMagicDashResult(m: HuduMagicDash): string {
   if (m.shade) lines.push(`- **Shade:** ${m.shade}`);
   if (m.icon) lines.push(`- **Icon:** ${m.icon}`);
   if (m.content_link) lines.push(`- **Link:** ${m.content_link}`);
-  lines.push(`- **Updated at:** ${m.updated_at}`);
+  // Hudu's magic_dash POST response doesn't include timestamps; omit if missing.
+  if (m.updated_at) lines.push(`- **Updated at:** ${m.updated_at}`);
   return lines.join("\n");
 }
 
