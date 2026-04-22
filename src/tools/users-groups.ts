@@ -30,7 +30,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatUserList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_users]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_users]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
@@ -61,7 +61,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatGroupList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_groups]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_groups]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

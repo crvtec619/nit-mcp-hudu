@@ -39,8 +39,6 @@ export async function huduFetch<T>(
     }
   }
 
-  console.log(`[huduFetch] GET ${endpoint} page=${url.searchParams.get("page") ?? "-"}`);
-
   const response = await fetch(url.toString(), {
     headers: {
       "x-api-key": env.HUDU_API_KEY,
@@ -49,7 +47,6 @@ export async function huduFetch<T>(
   });
 
   const text = await response.text();
-  console.log(`[huduFetch] ${endpoint} -> ${response.status}`);
 
   if (response.status === 429) {
     throw new Error(
@@ -84,8 +81,6 @@ export async function huduMutate<T>(
 
   const url = new URL(`${env.HUDU_BASE_URL}/${endpoint}`);
 
-  console.log(`[huduMutate] ${method} ${endpoint}`);
-
   const response = await fetch(url.toString(), {
     method,
     headers: {
@@ -96,7 +91,6 @@ export async function huduMutate<T>(
   });
 
   const text = await response.text();
-  console.log(`[huduMutate] ${endpoint} -> ${response.status}`);
 
   if (response.status === 429) {
     throw new Error(
