@@ -217,6 +217,15 @@ export const updateArticleSchema = z.object({
   folder_id: z.coerce.number().int().positive().optional().describe("Move article to a different folder"),
 });
 
+export const listMagicDashSchema = z.object({
+  company_id: z.coerce.number().int().positive().optional().describe(
+    "Filter widgets by company ID. If omitted, returns widgets across all companies."
+  ),
+  title: z.string().optional().describe(
+    "Filter by exact widget title match. Useful for checking whether a widget with a specific title already exists (Magic Dash upserts by title+company)."
+  ),
+});
+
 export const createMagicDashSchema = z.object({
   title: z.string().describe("Magic Dash widget title"),
   company_name: z.string().optional().describe("Company name to associate the widget with"),

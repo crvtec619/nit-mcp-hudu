@@ -283,6 +283,9 @@ export interface HuduGroup {
 }
 
 // ---- Magic Dash ----
+// Verified against live GET /magic_dash and POST /magic_dash responses:
+// the response does NOT include created_at / updated_at, but does
+// include a `position` field for ordering within a company.
 
 export interface HuduMagicDash {
   id: number;
@@ -295,8 +298,7 @@ export interface HuduMagicDash {
   content_link: string | null;
   content: string | null;
   shade: string | null;
-  created_at: string;
-  updated_at: string;
+  position: number | null;
 }
 
 // ---- Networks ----
