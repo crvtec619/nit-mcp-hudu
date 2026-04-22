@@ -15,6 +15,12 @@ type Bindings = Env & { OAUTH_PROVIDER: OAuthHelpers };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+const NONCE_TTL_SECONDS = 600;
+
+function nonceKey(nonce: string): string {
+  return `oauth:nonce:${nonce}`;
+}
+
 function getRequiredEnv(env: Bindings, key: keyof Bindings): string {
   const value = env[key];
   if (!value || typeof value !== "string") {
@@ -107,6 +113,8 @@ app.get("/authorize", async (c) => {
   }
 
   const nonce = crypto.randomUUID();
+  await c.env.OAUTH_KV.put(nonceKey(nonce), "1", { expirationTtl: NONCE_TTL_SECONDS });
+
   const statePayload = JSON.stringify({ oauthReq: oauthReqInfo, nonce });
   const state = await signState(statePayload, clientSecret);
 
@@ -161,6 +169,16 @@ app.get("/callback", async (c) => {
   if (!statePayload.oauthReq || !statePayload.nonce) {
     return c.text("Malformed state payload", 400);
   }
+
+  // Verify the nonce against KV (prevents replay of captured state blobs).
+  // Atomic check-and-delete: any second callback with the same nonce fails.
+  const storedKey = nonceKey(statePayload.nonce);
+  const stored = await c.env.OAUTH_KV.get(storedKey);
+  if (!stored) {
+    console.error("[auth] nonce rejected: not found or expired");
+    return c.text("Invalid or expired authentication request", 400);
+  }
+  await c.env.OAUTH_KV.delete(storedKey);
 
   // Exchange authorization code for tokens at Entra
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
