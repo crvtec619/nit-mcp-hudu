@@ -42,7 +42,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatCompanyList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_companies]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_companies]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
@@ -72,7 +72,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatCompanyDetail(company) }],
         };
       } catch (err) {
-        console.error("[hudu_get_company]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_get_company]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

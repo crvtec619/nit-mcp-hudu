@@ -36,7 +36,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatWebsiteList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_websites]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_websites]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
@@ -66,7 +66,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatWebsiteDetail(website) }],
         };
       } catch (err) {
-        console.error("[hudu_get_website]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_get_website]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

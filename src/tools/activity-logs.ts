@@ -38,7 +38,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatActivityLogList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_activity_logs]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_activity_logs]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

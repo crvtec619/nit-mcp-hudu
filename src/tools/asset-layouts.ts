@@ -35,7 +35,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatAssetLayoutList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_asset_layouts]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_asset_layouts]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
@@ -65,7 +65,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatAssetLayoutDetail(layout) }],
         };
       } catch (err) {
-        console.error("[hudu_get_asset_layout]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_get_asset_layout]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

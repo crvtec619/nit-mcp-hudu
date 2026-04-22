@@ -30,7 +30,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatRelationList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_relations]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_relations]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }

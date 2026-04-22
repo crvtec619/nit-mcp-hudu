@@ -37,7 +37,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatProcedureList(data) }],
         };
       } catch (err) {
-        console.error("[hudu_list_procedures]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_list_procedures]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
@@ -67,7 +67,7 @@ export function register(server: McpServer, env: Env) {
           content: [{ type: "text" as const, text: formatProcedureDetail(procedure) }],
         };
       } catch (err) {
-        console.error("[hudu_get_procedure]", err instanceof Error ? err.stack : err);
+        console.error("[hudu_get_procedure]", err instanceof Error ? err.message : String(err));
         throw err;
       }
     }
