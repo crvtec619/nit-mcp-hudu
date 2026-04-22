@@ -14,6 +14,7 @@ import type {
   HuduNetwork,
   HuduIpAddress,
   HuduVlan,
+  HuduMagicDash,
   HuduPagedResponse,
 } from "../types";
 
@@ -462,6 +463,23 @@ export function formatVlanList(paged: HuduPagedResponse<HuduVlan>): string {
     "",
     "| ID | VID | Name | Description |",
     "|---|---|---|---|",
+    ...rows,
+  ].join("\n");
+}
+
+export function formatMagicDashList(widgets: HuduMagicDash[]): string {
+  if (widgets.length === 0) return "No Magic Dash widgets found.";
+
+  const rows = widgets.map(
+    (w) =>
+      `| ${w.id} | ${esc(w.title)} | ${esc(w.company_name)} | ${w.company_id ?? ""} | ${w.shade ?? ""} | ${truncate(w.message, 60)} |`
+  );
+
+  return [
+    `**${widgets.length} Magic Dash widget${widgets.length === 1 ? "" : "s"}**`,
+    "",
+    "| ID | Title | Company | Company ID | Shade | Message |",
+    "|---|---|---|---|---|---|",
     ...rows,
   ].join("\n");
 }

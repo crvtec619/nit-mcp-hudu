@@ -10,6 +10,7 @@ import { register as registerActivityLogs } from "./activity-logs";
 import { register as registerFolders } from "./folders";
 import { register as registerUsersGroups } from "./users-groups";
 import { register as registerRelations } from "./relations";
+import { register as registerMagicDash } from "./magic-dash";
 
 export function registerAllTools(server: McpServer, env: Env) {
   // Phase 1: Read-only tools for QBR automation and cross-reference
@@ -24,7 +25,8 @@ export function registerAllTools(server: McpServer, env: Env) {
   registerFolders(server, env);
   registerUsersGroups(server, env);
   registerRelations(server, env);
+  registerMagicDash(server, env); // read-only: hudu_list_magic_dash
 
-  // Phase 2: Write tools (magic-dash.ts, create/update assets & articles)
+  // Phase 2: Write tools (create/update assets & articles, magic dash writes on local-dev)
   // Phase 3: Networks (networks.ts)
 }
