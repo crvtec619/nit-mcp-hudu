@@ -3,14 +3,14 @@
 Hudu MCP Server for Cloudflare Workers. Part of Networkz IT's integration platform.
 
 ## Architecture
-- Cloudflare Workers with Durable Objects (McpAgent pattern)
-- Entra ID OAuth for MCP client authentication
+- Cloudflare Workers (stateless) using `WebStandardStreamableHTTPServerTransport` from the MCP TypeScript SDK
+- Entra ID OAuth for MCP client authentication; state is HMAC-signed and nonce-validated via OAUTH_KV
 - Hudu REST API with x-api-key header auth
-- Hono for HTTP routing, Zod for validation
+- Hono for `/`, `/authorize`, `/callback` routing; Zod for input validation
 
 ## Key Files
-- `src/index.ts` - Entry point, OAuthProvider + HuduMcp McpAgent class
-- `src/auth-handler.ts` - Entra ID OAuth flow with dynamic localhost/prod URL detection
+- `src/index.ts` - Entry point, OAuthProvider + per-request McpServer/transport
+- `src/auth-handler.ts` - Entra ID OAuth flow with dynamic localhost/prod URL detection and KV nonce validation
 - `src/api-client.ts` - Hudu API client (huduFetch, huduFetchPaged, huduFetchAll)
 - `src/types.ts` - Hudu entity interfaces
 - `src/schemas/inputs.ts` - Zod input schemas for all tools
