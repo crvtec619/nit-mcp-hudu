@@ -39,11 +39,12 @@ Hudu API quirks to note: `Article` = KB Article (in the UI); `Procedure` = Proce
 src/
   index.ts             entry point — OAuthProvider + MCP transport
   auth-handler.ts      /authorize and /callback for Entra ID (HMAC state + KV nonce)
-  api-client.ts        huduFetch, huduFetchPaged, huduFetchAll
+  api-client.ts        huduFetch, huduFetchPaged, huduFetchAll, huduMutate
   types.ts             Hudu response types
   tools/               one file per resource (companies, assets, articles, …)
   schemas/inputs.ts    Zod schemas for tool input validation
   formatters/markdown.ts  markdown table + detail view helpers
+  local/               stdio entry + write tools (local-dev branch only)
 .github/workflows/deploy.yml  CI: typecheck + build + audit, then deploy on main
 wrangler.toml          Cloudflare Worker config
 ```
@@ -87,6 +88,31 @@ Grafana traces and logs are enabled via `[observability]` in `wrangler.toml`. Bo
 - **Phase 1 (current):** 17 read-only tools (companies, assets, articles, expirations, etc.)
 - **Phase 2 (next):** Write tools (create/update assets, articles, Magic Dash)
 - **Phase 3 (future):** Network documentation tools (IPs, networks, VLANs)
+
+## Local dev (write tools)
+
+The `local-dev` branch extends main with a stdio MCP server that exposes **write tools** (Magic Dash create/delete, Article create/update/archive/unarchive) for local experimentation. **It is never merged into `main`** — production remains read-only until specific writes are promoted through their own PRs.
+
+```bash
+git checkout local-dev
+cp .env.local.example .env.local   # fill in HUDU_API_KEY and HUDU_TEST_COMPANY_ID
+npm ci
+npm run local
+```
+
+Register with Claude Code:
+
+```bash
+claude mcp add hudu-dev -- npm run local --prefix /home/wsldavid/projects/nit-mcp-hudu
+```
+
+### Sandbox guardrail
+
+Every write tool on `local-dev` validates that the incoming `company_id` equals `HUDU_TEST_COMPANY_ID` (set in `.env.local`). Create a dedicated **"MCP Sandbox"** company in Hudu and point `HUDU_TEST_COMPANY_ID` at its numeric ID before running any writes. A mismatched company ID aborts the call with a descriptive error and never reaches the Hudu API.
+
+### No-merge policy
+
+`local-dev` is a long-lived branch. Do **not** open a PR that merges `local-dev` into `main`. To pick up new read tools or dep bumps from `main`, rebase `local-dev` on top of `main` locally and force-push. When a specific write graduates to production, it ships as a separate `feat/...` branch against `main` with its own gating (email allowlist).
 
 ## Sibling project
 
