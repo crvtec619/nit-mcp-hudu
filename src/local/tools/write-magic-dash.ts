@@ -47,6 +47,8 @@ export function register(server: McpServer, env: LocalEnv) {
         if (args.shade !== undefined) body.shade = args.shade;
         if (args.icon !== undefined) body.icon = args.icon;
         if (args.content_link !== undefined) body.content_link = args.content_link;
+        if (args.content !== undefined) body.content = args.content;
+        if (args.image_url !== undefined) body.image_url = args.image_url;
 
         const result = await huduMutate<HuduMagicDash>(env, "POST", "magic_dash", body);
 

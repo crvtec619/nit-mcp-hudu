@@ -37,6 +37,19 @@ export const createMagicDashSchema = z.object({
     .max(1000)
     .optional()
     .describe("Optional link the widget title points to."),
+  content: z
+    .string()
+    .max(50000)
+    .optional()
+    .describe(
+      "Optional expanded HTML body shown when the widget is opened. Distinct from 'message' (the summary line)."
+    ),
+  image_url: z
+    .string()
+    .url()
+    .max(1000)
+    .optional()
+    .describe("Optional image URL displayed on the widget (e.g. a logo or screenshot)."),
 });
 
 export const deleteMagicDashSchema = z.object({
