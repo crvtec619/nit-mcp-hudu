@@ -9,6 +9,7 @@ import {
   formatArticleCreateResult,
   formatArticleUpdateResult,
   formatArticleArchiveResult,
+  formatArticleDeleteResult,
 } from "../formatters/markdown";
 import type { HuduArticle } from "../../types";
 import { assertSandboxCompany, type LocalEnv } from "./guards";
@@ -165,6 +166,39 @@ export function register(server: McpServer, env: LocalEnv) {
       } catch (err) {
         console.error(
           "[hudu_unarchive_article]",
+          err instanceof Error ? err.message : String(err)
+        );
+        throw err;
+      }
+    }
+  );
+
+  server.registerTool(
+    "hudu_delete_article",
+    {
+      description:
+        "Permanently delete a KB article by ID. Unlike archive (reversible), delete is final. Local-dev only: company_id must equal HUDU_TEST_COMPANY_ID. Requires DELETE permissions on the Hudu API key.",
+      inputSchema: articleIdSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        openWorldHint: true,
+      },
+    },
+    async (args) => {
+      try {
+        assertSandboxCompany(args.company_id, env);
+
+        await huduMutate<null>(env, "DELETE", `articles/${args.id}`);
+
+        return {
+          content: [
+            { type: "text" as const, text: formatArticleDeleteResult(args.id) },
+          ],
+        };
+      } catch (err) {
+        console.error(
+          "[hudu_delete_article]",
           err instanceof Error ? err.message : String(err)
         );
         throw err;

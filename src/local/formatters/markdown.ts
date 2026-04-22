@@ -53,3 +53,7 @@ export function formatArticleArchiveResult(id: number, archived: boolean): strin
     ? `**Article archived** (id: ${id}). Use hudu_unarchive_article to restore.`
     : `**Article unarchived** (id: ${id}).`;
 }
+
+export function formatArticleDeleteResult(id: number): string {
+  return `**Article deleted** (id: ${id}).`;
+}
