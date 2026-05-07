@@ -4,6 +4,9 @@
   "description": "Hudu MCP Server for Cloudflare Workers",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "wrangler dev",
