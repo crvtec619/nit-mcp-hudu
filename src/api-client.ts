@@ -1,5 +1,10 @@
 import type { HuduPagedResponse } from "./types";
 
+// Cloudflare WAF in front of docs.networkzit.com blocks requests with the default
+// undici/Workers User-Agent. An identified bot UA passes; without this the API
+// returns 403 with a Cloudflare HTML interstitial instead of JSON.
+const USER_AGENT = "nit-mcp-hudu/1.0 (+https://github.com/Networkz-IT/nit-mcp-hudu)";
+
 /**
  * Parse JSON safely, throwing a contextual error on failure.
  */
@@ -43,6 +48,7 @@ export async function huduFetch<T>(
     headers: {
       "x-api-key": env.HUDU_API_KEY,
       "Content-Type": "application/json",
+      "User-Agent": USER_AGENT,
     },
   });
 
@@ -86,6 +92,7 @@ export async function huduMutate<T>(
     headers: {
       "x-api-key": env.HUDU_API_KEY,
       "Content-Type": "application/json",
+      "User-Agent": USER_AGENT,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
