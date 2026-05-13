@@ -6,6 +6,31 @@ import type { HuduPagedResponse } from "./types";
 const USER_AGENT = "nit-mcp-hudu/1.0 (+https://github.com/Networkz-IT/nit-mcp-hudu)";
 
 /**
+ * Strip query string and numeric IDs from an endpoint so log cardinality
+ * stays bounded (e.g. "companies/64/assets?page=2" -> "companies/:id/assets").
+ */
+function normalizeEndpoint(endpoint: string): string {
+  return endpoint.split("?")[0].replace(/\/\d+/g, "/:id");
+}
+
+function logHuduCall(
+  method: string,
+  endpoint: string,
+  status: number,
+  durationMs: number
+): void {
+  console.log(
+    JSON.stringify({
+      type: "hudu_api",
+      method,
+      endpoint: normalizeEndpoint(endpoint),
+      status,
+      durationMs,
+    })
+  );
+}
+
+/**
  * Parse JSON safely, throwing a contextual error on failure.
  */
 function safeJsonParse<T>(text: string, endpoint: string): T {
@@ -44,6 +69,7 @@ export async function huduFetch<T>(
     }
   }
 
+  const start = Date.now();
   const response = await fetch(url.toString(), {
     headers: {
       "x-api-key": env.HUDU_API_KEY,
@@ -53,6 +79,7 @@ export async function huduFetch<T>(
   });
 
   const text = await response.text();
+  logHuduCall("GET", endpoint, response.status, Date.now() - start);
 
   if (response.status === 429) {
     throw new Error(
@@ -61,7 +88,6 @@ export async function huduFetch<T>(
   }
 
   if (!response.ok) {
-    console.error(`[hudu] API error ${response.status} for ${endpoint}`);
     throw new Error(
       `Hudu API request failed (${response.status}) for ${endpoint}. Check the resource ID and try again.`
     );
@@ -87,6 +113,7 @@ export async function huduMutate<T>(
 
   const url = new URL(`${env.HUDU_BASE_URL}/${endpoint}`);
 
+  const start = Date.now();
   const response = await fetch(url.toString(), {
     method,
     headers: {
@@ -98,6 +125,7 @@ export async function huduMutate<T>(
   });
 
   const text = await response.text();
+  logHuduCall(method, endpoint, response.status, Date.now() - start);
 
   if (response.status === 429) {
     throw new Error(
@@ -106,7 +134,6 @@ export async function huduMutate<T>(
   }
 
   if (!response.ok) {
-    console.error(`[hudu] API error ${response.status} for ${method} ${endpoint}`);
     throw new Error(
       `Hudu API request failed (${response.status}) for ${method} ${endpoint}. Check the resource ID and try again.`
     );
