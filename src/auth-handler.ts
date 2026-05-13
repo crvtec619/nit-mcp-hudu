@@ -1,14 +1,12 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
 
-const PROD_URL = "https://nit-mcp-hudu.nit-7ac.workers.dev";
-
-function getWorkerUrl(req: Request): string {
+function getWorkerUrl(req: Request, env: Bindings): string {
   const url = new URL(req.url);
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
     return `${url.protocol}//${url.host}`;
   }
-  return PROD_URL;
+  return getRequiredEnv(env, "PUBLIC_BASE_URL");
 }
 
 type Bindings = Env & { OAUTH_PROVIDER: OAuthHelpers };
@@ -123,7 +121,7 @@ app.get("/authorize", async (c) => {
   );
   entraAuthorizeUrl.searchParams.set("client_id", clientId);
   entraAuthorizeUrl.searchParams.set("response_type", "code");
-  const workerUrl = getWorkerUrl(c.req.raw);
+  const workerUrl = getWorkerUrl(c.req.raw, c.env);
   entraAuthorizeUrl.searchParams.set("redirect_uri", `${workerUrl}/callback`);
   entraAuthorizeUrl.searchParams.set("scope", "openid email profile User.Read");
   entraAuthorizeUrl.searchParams.set("state", state);
@@ -186,7 +184,7 @@ app.get("/callback", async (c) => {
     client_id: clientId,
     client_secret: clientSecret,
     code,
-    redirect_uri: `${getWorkerUrl(c.req.raw)}/callback`,
+    redirect_uri: `${getWorkerUrl(c.req.raw, c.env)}/callback`,
     grant_type: "authorization_code",
   });
 
