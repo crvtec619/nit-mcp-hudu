@@ -96,9 +96,15 @@ async function verifyState(state: string, secret: string): Promise<string | null
   return new TextDecoder().decode(fromBase64Url(payloadB64));
 }
 
-// Health check
+// Stable health endpoint for uptime probes; intentionally exempt from WAF
+// country/bot rules so external monitors in any geo can reach it.
+app.get("/healthz", (c) => {
+  return c.json({ server: "hudu-mcp", version: "1.0.0", status: "ok" });
+});
+
+// Root: minimal landing; avoids leaking version info to unauthenticated callers.
 app.get("/", (c) => {
-  return c.json({ server: "hudu-mcp", version: "1.0.0" });
+  return c.text("OK", 200);
 });
 
 // OAuth authorize: redirect user to Entra ID
