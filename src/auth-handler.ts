@@ -1,5 +1,6 @@
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { Hono } from "hono";
+import { secureHeaders } from "hono/secure-headers";
 
 const PROD_URL = "https://nit-mcp-hudu.nit-7ac.workers.dev";
 
@@ -14,6 +15,27 @@ function getWorkerUrl(req: Request): string {
 type Bindings = Env & { OAUTH_PROVIDER: OAuthHelpers };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use(
+  "*",
+  secureHeaders({
+    strictTransportSecurity: "max-age=31536000; includeSubDomains; preload",
+    referrerPolicy: "no-referrer",
+    xContentTypeOptions: "nosniff",
+    xFrameOptions: "DENY",
+    removePoweredBy: true,
+  })
+);
+
+// OAuth endpoints must not be cached by browsers or intermediaries:
+// state, code, and redirect URLs are single-use and tied to a nonce.
+const noStore: import("hono").MiddlewareHandler = async (c, next) => {
+  await next();
+  c.header("Cache-Control", "no-store");
+  c.header("Pragma", "no-cache");
+};
+app.use("/authorize", noStore);
+app.use("/callback", noStore);
 
 const NONCE_TTL_SECONDS = 600;
 
