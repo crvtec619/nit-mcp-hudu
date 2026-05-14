@@ -11,6 +11,10 @@ import { register as registerFolders } from "./folders";
 import { register as registerUsersGroups } from "./users-groups";
 import { register as registerRelations } from "./relations";
 import { register as registerMagicDash } from "./magic-dash";
+import { register as registerLists } from "./lists";
+import { register as registerNetworks } from "./networks";
+import { register as registerPasswordFolders } from "./password-folders";
+import { register as registerIntegrations } from "./integrations";
 
 export function registerAllTools(server: McpServer, env: Env) {
   // Phase 1: Read-only tools for QBR automation and cross-reference
@@ -27,6 +31,14 @@ export function registerAllTools(server: McpServer, env: Env) {
   registerRelations(server, env);
   registerMagicDash(server, env); // read-only: hudu_list_magic_dash
 
+  // Phase 1.5: Gap-driven read-only adds (Lists/IPAM/Password Folders + diag).
+  // Racks/cards/matchers were probed and dropped: /racks 404, /cards 404,
+  // /matchers 500 (verified 2026-05-13). rack_storage_items works but is
+  // orphaned without /racks. See PR description for the smoke-test matrix.
+  registerLists(server, env);
+  registerNetworks(server, env);
+  registerPasswordFolders(server, env);
+  registerIntegrations(server, env);
+
   // Phase 2: Write tools (create/update assets & articles, magic dash writes on local-dev)
-  // Phase 3: Networks (networks.ts)
 }

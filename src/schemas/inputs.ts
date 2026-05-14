@@ -154,21 +154,64 @@ export const listRelationsSchema = z.object({
   page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
-// ---- Networks (Phase 3, schemas defined now) ----
+// ---- Networks / IPAM ----
+// Note: /networks and /ip_addresses return ALL records in one response and
+// reject ?page= with HTTP 400. No pagination params here.
 
 export const listNetworksSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter networks by company ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+});
+
+export const getNetworkSchema = z.object({
+  network_id: z.coerce.number().int().positive().describe("The ID of the network to retrieve"),
 });
 
 export const listIpAddressesSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter IP addresses by company ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  network_id: z.coerce.number().int().positive().optional().describe("Filter IPs by parent network ID"),
+  address: z.string().optional().describe("Filter by exact IP address"),
+  status: z.string().optional().describe("Filter by status (e.g. 'Assigned', 'Available', 'Reserved')"),
+});
+
+export const getIpAddressSchema = z.object({
+  ip_address_id: z.coerce.number().int().positive().describe("The ID of the IP address record to retrieve"),
 });
 
 export const listVlansSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter VLANs by company ID"),
   page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+});
+
+// ---- Lists (Admin > Lists; source for ListSelect layout fields) ----
+
+export const listListsSchema = z.object({
+  name: z.string().optional().describe("Filter lists by name"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
+});
+
+export const getListSchema = z.object({
+  list_id: z.coerce.number().int().positive().describe("The ID of the list to retrieve (includes list_options)"),
+});
+
+// ---- Password Folders ----
+// Folder structure only. asset_passwords list/get is intentionally NOT exposed;
+// the API key is provisioned without password access.
+
+export const listPasswordFoldersSchema = z.object({
+  company_id: z.coerce.number().int().positive().optional().describe("Filter password folders by company ID"),
+  name: z.string().optional().describe("Filter password folders by name"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
+});
+
+// ---- Uploads (attachments) ----
+
+export const listUploadsSchema = z.object({
+  uploadable_type: z.string().optional().describe("Filter by parent record type (e.g. 'Asset', 'Article', 'Company')"),
+  uploadable_id: z.coerce.number().int().positive().optional().describe("Filter by parent record ID (must be paired with uploadable_type)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Phase 2: Write operations (schemas defined now) ----

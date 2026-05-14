@@ -302,29 +302,49 @@ export interface HuduMagicDash {
 }
 
 // ---- Networks ----
+// Verified shape from GET /networks/:id (2026-05-13). network_type is a numeric
+// enum, not a string. /networks does NOT accept ?page=.
 
 export interface HuduNetwork {
   id: number;
   company_id: number;
   name: string | null;
   address: string | null;
-  network_type: string | null;
-  cidr: string | null;
+  network_type: number | null;
+  slug: string | null;
+  location_id: number | null;
   description: string | null;
+  notes: string | null;
+  ancestry: string | null;
+  settings: Record<string, unknown> | null;
+  sync_identifier: string | null;
+  is_radar: boolean | null;
+  status_list_item_id: number | null;
+  role_list_item_id: number | null;
+  vlan_id: number | null;
+  url: string | null;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
 // ---- IP Addresses ----
+// Verified shape from GET /ip_addresses/:id (2026-05-13). /ip_addresses does
+// NOT accept ?page=.
 
 export interface HuduIpAddress {
   id: number;
   company_id: number;
   address: string | null;
   status: string | null;
+  asset_id: number | null;
+  asset_name: string | null;
+  asset_url: string | null;
+  notes: string | null;
   description: string | null;
   fqdn: string | null;
-  nat_address: string | null;
+  url: string | null;
+  discarded_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -342,7 +362,57 @@ export interface HuduVlan {
 }
 
 // ---- Passwords ----
-// Not included in Phase 1 scope. API key is configured without password access.
+// asset_passwords list/get not included; API key is configured without password
+// access. password_folders (folder structure only, no credentials) is exposed.
+
+export interface HuduPasswordFolder {
+  id: number;
+  name: string;
+  description: string | null;
+  company_id: number | null;
+  parent_password_folder_id: number | null;
+  allowed_groups: unknown[] | null;
+  allowed_users: unknown[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Lists ----
+// Hudu Admin > Lists. Used as the source of options for ListSelect layout fields.
+// GET /lists returns lists with `list_items` inline (verified 2026-05-13).
+
+export interface HuduListItem {
+  id: number;
+  name: string;
+}
+
+export interface HuduList {
+  id: number;
+  name: string;
+  description?: string | null;
+  list_items?: HuduListItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Uploads ----
+// Verified shape from GET /uploads/:id (2026-05-13). `size` is a human-readable
+// string (e.g. "61.8 KB"), `mime` is the content type, `created_date` is a
+// formatted string. No updated_at; archival is via archived_at timestamp.
+
+export interface HuduUpload {
+  id: number;
+  slug: string | null;
+  url: string | null;
+  name: string | null;
+  ext: string | null;
+  mime: string | null;
+  size: string | null;
+  created_date: string | null;
+  archived_at: string | null;
+  uploadable_id: number | null;
+  uploadable_type: string | null;
+}
 
 // ---- App Info ----
 
