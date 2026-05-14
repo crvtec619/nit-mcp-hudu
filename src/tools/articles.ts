@@ -27,6 +27,7 @@ export function register(server: McpServer, env: Env) {
             name: args.name,
             company_id: args.company_id,
             draft: args.draft,
+            enable_sharing: args.enable_sharing,
             slug: args.slug,
             updated_at: args.updated_at,
             page_size: args.page_size,

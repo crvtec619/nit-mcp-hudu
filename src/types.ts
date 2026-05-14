@@ -350,13 +350,95 @@ export interface HuduIpAddress {
 }
 
 // ---- VLANs ----
+// Verified shape from GET /vlans/:id (2026-05-13). Field is `vlan_id` (numeric
+// 1-4094), not `vid`. Endpoint returns bare array; does not paginate.
 
 export interface HuduVlan {
   id: number;
-  company_id: number;
   name: string | null;
-  vid: number | null;
+  slug: string | null;
+  vlan_id: number | null;
   description: string | null;
+  notes: string | null;
+  company_id: number;
+  vlan_zone_id: number | null;
+  status_list_item_id: number | null;
+  role_list_item_id: number | null;
+  networks_count: number | null;
+  url: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- VLAN Zones ----
+// Logical grouping of VLANs (datacenter, building). vlan_id_ranges is a string
+// like "100-500,1000-1500".
+
+export interface HuduVlanZone {
+  id: number;
+  name: string | null;
+  slug: string | null;
+  description: string | null;
+  vlan_id_ranges: string | null;
+  company_id: number;
+  vlans_count: number | null;
+  url: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Flags ----
+// Lightweight labels attached to any record. flagable_type is one of: Asset,
+// Website, Article, AssetPassword, Company, Procedure, RackStorage, Network,
+// IpAddress, Vlan, VlanZone.
+
+export interface HuduFlag {
+  id: number;
+  flag_type_id: number;
+  description: string | null;
+  flagable_type: string;
+  flagable_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HuduFlagType {
+  id: number;
+  name: string;
+  color: string;
+  slug: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Procedure Tasks ----
+// Individual tasks within a Process (template) or Run (active instance).
+
+export interface HuduProcedureTask {
+  id: number;
+  name: string;
+  description: string | null;
+  position: number | null;
+  priority: string | null;
+  completed: boolean | null;
+  completed_date: string | null;
+  completion_notes: string | null;
+  due_date: string | null;
+  formatted_due_date: string | null;
+  user_id: number | null;
+  user_name: string | null;
+  assigned_users: number[] | null;
+  first_assigned_user_id: number | null;
+  first_assigned_user_name: string | null;
+  procedure_id: number;
+  optional: boolean | null;
+  parent_task_id: number | null;
+  subtask_ids: number[] | null;
+  subtask_count: number | null;
+  has_subtasks: boolean | null;
+  url: string | null;
   created_at: string;
   updated_at: string;
 }

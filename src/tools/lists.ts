@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_lists",
     {
       description:
-        "List Hudu Admin > Lists. These provide the option sets for ListSelect layout fields. Use this to verify a list exists before referencing it from a layout (e.g. before the Dropdown -> ListSelect migration).",
+        "List Hudu Admin > Lists. These provide the option sets for ListSelect layout fields. Use 'query' for partial-match search, 'name' for exact match. Use this to verify a list exists before referencing it from a layout (e.g. before the Dropdown -> ListSelect migration).",
       inputSchema: listListsSchema,
       annotations: {
         readOnlyHint: true,
@@ -23,6 +23,7 @@ export function register(server: McpServer, env: Env) {
           env,
           "lists",
           {
+            query: args.query,
             name: args.name,
             page_size: args.page_size,
           },

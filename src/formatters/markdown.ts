@@ -19,6 +19,10 @@ import type {
   HuduPasswordFolder,
   HuduUpload,
   HuduAppInfo,
+  HuduVlanZone,
+  HuduFlag,
+  HuduFlagType,
+  HuduProcedureTask,
   HuduPagedResponse,
 } from "../types";
 
@@ -457,20 +461,201 @@ export function formatIpAddressList(records: HuduIpAddress[]): string {
   ].join("\n");
 }
 
-export function formatVlanList(paged: HuduPagedResponse<HuduVlan>): string {
-  if (paged.records.length === 0) return "No VLANs found.";
+// VLANs are returned as a bare array (no pagination).
+
+export function formatVlanList(records: HuduVlan[]): string {
+  if (records.length === 0) return "No VLANs found.";
+
+  const rows = records.map(
+    (v) => `| ${v.id} | ${v.vlan_id ?? "-"} | ${esc(v.name)} | ${v.company_id} | ${v.vlan_zone_id ?? "-"} | ${v.networks_count ?? "-"} |`
+  );
+
+  return [
+    `**${records.length} VLANs**`,
+    "",
+    "| ID | VLAN # | Name | Company ID | Zone ID | Networks |",
+    "|---|---|---|---|---|---|",
+    ...rows,
+  ].join("\n");
+}
+
+export function formatVlanDetail(v: HuduVlan): string {
+  return [
+    `# VLAN: ${esc(v.name) || v.id}`,
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| ID | ${v.id} |`,
+    `| Name | ${esc(v.name) || "-"} |`,
+    `| VLAN # | ${v.vlan_id ?? "-"} |`,
+    `| Company ID | ${v.company_id} |`,
+    `| Zone ID | ${v.vlan_zone_id ?? "-"} |`,
+    `| Status (list item) | ${v.status_list_item_id ?? "-"} |`,
+    `| Role (list item) | ${v.role_list_item_id ?? "-"} |`,
+    `| Networks count | ${v.networks_count ?? "-"} |`,
+    `| Hudu URL | ${esc(v.url) || "-"} |`,
+    `| Archived | ${v.archived_at ?? "No"} |`,
+    `| Created | ${v.created_at ?? ""} |`,
+    `| Updated | ${v.updated_at ?? ""} |`,
+    ...(v.description ? ["", "## Description", "", truncate(v.description, 2000)] : []),
+    ...(v.notes ? ["", "## Notes", "", truncate(v.notes, 2000)] : []),
+  ].join("\n");
+}
+
+// ---- VLAN Zones ----
+
+export function formatVlanZoneList(records: HuduVlanZone[]): string {
+  if (records.length === 0) return "No VLAN Zones found.";
+
+  const rows = records.map(
+    (z) => `| ${z.id} | ${esc(z.name)} | ${z.company_id} | ${esc(z.vlan_id_ranges)} | ${z.vlans_count ?? "-"} |`
+  );
+
+  return [
+    `**${records.length} VLAN Zones**`,
+    "",
+    "| ID | Name | Company ID | VLAN ID Ranges | VLANs |",
+    "|---|---|---|---|---|",
+    ...rows,
+  ].join("\n");
+}
+
+export function formatVlanZoneDetail(z: HuduVlanZone): string {
+  return [
+    `# VLAN Zone: ${esc(z.name) || z.id}`,
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| ID | ${z.id} |`,
+    `| Name | ${esc(z.name) || "-"} |`,
+    `| Company ID | ${z.company_id} |`,
+    `| VLAN ID Ranges | ${esc(z.vlan_id_ranges) || "-"} |`,
+    `| VLANs count | ${z.vlans_count ?? "-"} |`,
+    `| Hudu URL | ${esc(z.url) || "-"} |`,
+    `| Archived | ${z.archived_at ?? "No"} |`,
+    `| Created | ${z.created_at ?? ""} |`,
+    `| Updated | ${z.updated_at ?? ""} |`,
+    ...(z.description ? ["", "## Description", "", truncate(z.description, 2000)] : []),
+  ].join("\n");
+}
+
+// ---- Flags ----
+
+export function formatFlagList(paged: HuduPagedResponse<HuduFlag>): string {
+  if (paged.records.length === 0) return "No flags found.";
 
   const rows = paged.records.map(
-    (v) => `| ${v.id} | ${v.vid ?? ""} | ${esc(v.name)} | ${truncate(v.description, 60)} |`
+    (f) => `| ${f.id} | ${f.flag_type_id} | ${esc(f.flagable_type)}#${f.flagable_id} | ${truncate(f.description, 60)} | ${f.created_at ?? ""} |`
   );
 
   return [
     pageInfo(paged),
     "",
-    "| ID | VID | Name | Description |",
-    "|---|---|---|---|",
+    "| ID | Flag Type ID | Flagged Record | Description | Created |",
+    "|---|---|---|---|---|",
     ...rows,
   ].join("\n");
+}
+
+export function formatFlagDetail(f: HuduFlag): string {
+  return [
+    `# Flag: ${f.id}`,
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| ID | ${f.id} |`,
+    `| Flag Type ID | ${f.flag_type_id} |`,
+    `| Flagged Record | ${esc(f.flagable_type)}#${f.flagable_id} |`,
+    `| Created | ${f.created_at ?? ""} |`,
+    `| Updated | ${f.updated_at ?? ""} |`,
+    ...(f.description ? ["", "## Description", "", truncate(f.description, 2000)] : []),
+  ].join("\n");
+}
+
+// ---- Flag Types ----
+
+export function formatFlagTypeList(paged: HuduPagedResponse<HuduFlagType>): string {
+  if (paged.records.length === 0) return "No flag types found.";
+
+  const rows = paged.records.map(
+    (t) => `| ${t.id} | ${esc(t.name)} | ${esc(t.color)} | ${esc(t.slug)} | ${t.updated_at ?? ""} |`
+  );
+
+  return [
+    pageInfo(paged),
+    "",
+    "| ID | Name | Color | Slug | Updated |",
+    "|---|---|---|---|---|",
+    ...rows,
+  ].join("\n");
+}
+
+export function formatFlagTypeDetail(t: HuduFlagType): string {
+  return [
+    `# Flag Type: ${esc(t.name)}`,
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| ID | ${t.id} |`,
+    `| Name | ${esc(t.name)} |`,
+    `| Color | ${esc(t.color)} |`,
+    `| Slug | ${esc(t.slug) || "-"} |`,
+    `| Created | ${t.created_at ?? ""} |`,
+    `| Updated | ${t.updated_at ?? ""} |`,
+  ].join("\n");
+}
+
+// ---- Procedure Tasks ----
+
+export function formatProcedureTaskList(records: HuduProcedureTask[]): string {
+  if (records.length === 0) return "No procedure tasks found.";
+
+  const rows = records.map(
+    (t) => `| ${t.id} | ${esc(t.name)} | ${t.procedure_id} | ${t.position ?? "-"} | ${esc(t.priority) || "-"} | ${t.completed ? "Yes" : "No"} | ${esc(t.formatted_due_date) || "-"} |`
+  );
+
+  return [
+    `**${records.length} procedure tasks**`,
+    "",
+    "| ID | Name | Procedure ID | Position | Priority | Completed | Due |",
+    "|---|---|---|---|---|---|---|",
+    ...rows,
+  ].join("\n");
+}
+
+export function formatProcedureTaskDetail(t: HuduProcedureTask): string {
+  const lines = [
+    `# Procedure Task: ${esc(t.name)}`,
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| ID | ${t.id} |`,
+    `| Name | ${esc(t.name)} |`,
+    `| Procedure ID | ${t.procedure_id} |`,
+    `| Position | ${t.position ?? "-"} |`,
+    `| Priority | ${esc(t.priority) || "-"} |`,
+    `| Completed | ${t.completed ? "Yes" : "No"} |`,
+    `| Completed Date | ${esc(t.completed_date) || "-"} |`,
+    `| Due Date | ${esc(t.formatted_due_date) || "-"} |`,
+    `| Completed By | ${esc(t.user_name) || "-"} (ID: ${t.user_id ?? "-"}) |`,
+    `| Assigned (count) | ${t.assigned_users?.length ?? 0} |`,
+    `| First Assigned | ${esc(t.first_assigned_user_name) || "-"} (ID: ${t.first_assigned_user_id ?? "-"}) |`,
+    `| Optional | ${t.optional ? "Yes" : "No"} |`,
+    `| Parent Task ID | ${t.parent_task_id ?? "-"} |`,
+    `| Subtask Count | ${t.subtask_count ?? 0} |`,
+    `| Hudu URL | ${esc(t.url) || "-"} |`,
+    `| Created | ${t.created_at ?? ""} |`,
+    `| Updated | ${t.updated_at ?? ""} |`,
+  ];
+
+  if (t.description) {
+    lines.push("", "## Description", "", truncate(t.description, 3000));
+  }
+  if (t.completion_notes) {
+    lines.push("", "## Completion Notes", "", truncate(t.completion_notes, 2000));
+  }
+
+  return lines.join("\n");
 }
 
 // ---- Network / IP detail ----

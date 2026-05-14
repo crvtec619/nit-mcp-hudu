@@ -62,6 +62,7 @@ export const listArticlesSchema = z.object({
   name: z.string().optional().describe("Filter articles by exact name. For partial lookups, use 'search' instead."),
   company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID. Omit for global KB articles."),
   draft: z.boolean().optional().describe("Filter by draft status (true = drafts only, false = published only)"),
+  enable_sharing: z.boolean().optional().describe("Filter by public-sharing status (true = articles with a public share URL)"),
   slug: z.string().optional().describe("Filter by URL slug"),
   updated_at: z.string().optional().describe("Filter articles updated within a range or at an exact time (ISO format)"),
   page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
@@ -100,13 +101,21 @@ export const getWebsiteSchema = z.object({
 });
 
 // ---- Procedures (Processes in the Hudu UI) ----
+// Hudu calls templates "processes" and active instances "runs". The list
+// endpoint returns both; use `type` to filter.
 
 export const listProceduresSchema = z.object({
-  name: z.string().optional().describe("Filter procedures by name"),
+  name: z.string().optional().describe("Filter procedures by name (exact match, case-insensitive)"),
   company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID"),
   slug: z.string().optional().describe("Filter by URL slug"),
-  global_template: z.enum(["true", "false"]).optional().describe("Filter for global templates ('true') vs company-specific procedures ('false')"),
-  parent_procedure_id: z.coerce.number().int().positive().optional().describe("Filter for child procedures of a specific parent procedure"),
+  type: z.enum(["process", "run", "all"]).optional().describe("Filter by type: 'process' (templates), 'run' (active instances), or 'all' (both, default)"),
+  process_scope: z.enum(["global", "company"]).optional().describe("Filter processes by scope: 'global' (available to all companies) or 'company' (company-specific)"),
+  parent_process_id: z.coerce.number().int().positive().optional().describe("Filter runs by parent process ID (the process they were kicked off from)"),
+  parent_procedure_id: z.coerce.number().int().positive().optional().describe("DEPRECATED alias for parent_process_id. Prefer parent_process_id."),
+  global_template: z.enum(["true", "false"]).optional().describe("DEPRECATED. Use process_scope instead."),
+  archived: z.enum(["true", "false", "1", "0"]).optional().describe("Filter by archived status. Defaults to non-archived only if omitted."),
+  created_at: z.string().optional().describe("Filter by creation date (ISO format, or 'start,end' range)"),
+  updated_at: z.string().optional().describe("Filter by update date (ISO format, or 'start,end' range)"),
   page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
   page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
@@ -129,10 +138,13 @@ export const listActivityLogsSchema = z.object({
 });
 
 // ---- Folders ----
+// Folders are typed: 'article' (KB folders) or 'photo' (photo folders).
 
 export const listFoldersSchema = z.object({
   name: z.string().optional().describe("Filter folders by name"),
   company_id: z.coerce.number().int().positive().optional().describe("Filter folders by company ID"),
+  in_company: z.boolean().optional().describe("When true, returns only company-specific folders"),
+  folder_type: z.enum(["article", "photo"]).optional().describe("Filter by folder type: 'article' (KB folders) or 'photo' (photo folders)"),
   page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
   page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
@@ -140,11 +152,23 @@ export const listFoldersSchema = z.object({
 // ---- Users and Groups ----
 
 export const listUsersSchema = z.object({
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  first_name: z.string().optional().describe("Filter users by first name"),
+  last_name: z.string().optional().describe("Filter users by last name"),
+  search: z.string().optional().describe("Search across first and last name (fuzzy match)"),
+  email: z.string().optional().describe("Filter users by email address"),
+  security_level: z.enum(["super_admin", "admin", "spectator", "editor", "author", "portal_member", "portal_admin"]).optional().describe("Filter by security level"),
+  portal_member_company_id: z.coerce.number().int().positive().optional().describe("Filter portal members by their associated company ID"),
+  archived: z.boolean().optional().describe("Filter by archived status"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const listGroupsSchema = z.object({
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  name: z.string().optional().describe("Filter groups by name (case-insensitive)"),
+  default: z.boolean().optional().describe("Filter by default-group status"),
+  search: z.string().optional().describe("Search across group names"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 // ---- Relations ----
@@ -177,15 +201,83 @@ export const getIpAddressSchema = z.object({
   ip_address_id: z.coerce.number().int().positive().describe("The ID of the IP address record to retrieve"),
 });
 
+// ---- VLANs ----
+// /vlans returns ALL records in one response (no pagination).
+
 export const listVlansSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter VLANs by company ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
+  vlan_zone_id: z.coerce.number().int().positive().optional().describe("Filter VLANs by VLAN Zone ID"),
+  name: z.string().optional().describe("Filter by VLAN name (exact match)"),
+  vlan_id: z.coerce.number().int().positive().optional().describe("Filter by numeric VLAN ID (1-4094)"),
+  archived: z.boolean().optional().describe("Filter by archive status (default: non-archived only)"),
+});
+
+export const getVlanSchema = z.object({
+  vlan_id: z.coerce.number().int().positive().describe("The ID of the VLAN record to retrieve"),
+});
+
+// ---- VLAN Zones ----
+
+export const listVlanZonesSchema = z.object({
+  company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID"),
+  name: z.string().optional().describe("Filter by zone name (exact match)"),
+  archived: z.boolean().optional().describe("Filter by archive status (default: non-archived only)"),
+});
+
+export const getVlanZoneSchema = z.object({
+  vlan_zone_id: z.coerce.number().int().positive().describe("The ID of the VLAN Zone to retrieve"),
+});
+
+// ---- Flags and Flag Types ----
+
+export const listFlagsSchema = z.object({
+  flag_type_id: z.coerce.number().int().positive().optional().describe("Filter by flag type ID"),
+  flagable_type: z.enum(["Asset", "Website", "Article", "AssetPassword", "Company", "Procedure", "RackStorage", "Network", "IpAddress", "Vlan", "VlanZone"]).optional().describe("Filter by record type that the flag is attached to"),
+  flagable_id: z.coerce.number().int().positive().optional().describe("Filter by record ID (pair with flagable_type)"),
+  description: z.string().optional().describe("Filter by flag description"),
+  created_at: z.string().optional().describe("Filter by creation date (ISO format)"),
+  updated_at: z.string().optional().describe("Filter by update date (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
+});
+
+export const getFlagSchema = z.object({
+  flag_id: z.coerce.number().int().positive().describe("The ID of the flag to retrieve"),
+});
+
+export const listFlagTypesSchema = z.object({
+  name: z.string().optional().describe("Filter by exact flag type name"),
+  color: z.string().optional().describe("Filter by color value"),
+  slug: z.string().optional().describe("Filter by slug"),
+  created_at: z.string().optional().describe("Filter by creation date (ISO format)"),
+  updated_at: z.string().optional().describe("Filter by update date (ISO format)"),
+  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
+  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
+});
+
+export const getFlagTypeSchema = z.object({
+  flag_type_id: z.coerce.number().int().positive().describe("The ID of the flag type to retrieve"),
+});
+
+// ---- Procedure Tasks ----
+// Individual tasks within a Process (template) or Run (active instance).
+// `procedure_id` filters by either parent process or parent run.
+
+export const listProcedureTasksSchema = z.object({
+  procedure_id: z.coerce.number().int().positive().optional().describe("Filter by process or run ID (returns all tasks for that process/run)"),
+  name: z.string().optional().describe("Filter by task name"),
+  company_id: z.coerce.number().int().positive().optional().describe("Filter by company ID"),
+});
+
+export const getProcedureTaskSchema = z.object({
+  procedure_task_id: z.coerce.number().int().positive().describe("The ID of the procedure task to retrieve"),
 });
 
 // ---- Lists (Admin > Lists; source for ListSelect layout fields) ----
 
 export const listListsSchema = z.object({
-  name: z.string().optional().describe("Filter lists by name"),
+  query: z.string().optional().describe("Search lists by name (partial match)"),
+  name: z.string().optional().describe("Filter by exact list name"),
   page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
   page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });

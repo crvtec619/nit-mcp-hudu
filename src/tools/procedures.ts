@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_procedures",
     {
       description:
-        "List procedures in Hudu. In the Hudu UI these are called 'Processes'. Filter by name or company_id. Returns 25 per page.",
+        "List procedures in Hudu. The API returns both 'processes' (templates) and 'runs' (active instances created via kickoff). Use type='process'/'run'/'all', process_scope='global'/'company' for scope. parent_process_id filters runs by parent process. Returns 25 per page. (In the Hudu UI 'procedure' = 'Process'.)",
       inputSchema: listProceduresSchema,
       annotations: {
         readOnlyHint: true,
@@ -26,8 +26,13 @@ export function register(server: McpServer, env: Env) {
             name: args.name,
             company_id: args.company_id,
             slug: args.slug,
+            type: args.type,
+            process_scope: args.process_scope,
+            parent_process_id: args.parent_process_id ?? args.parent_procedure_id,
             global_template: args.global_template,
-            parent_procedure_id: args.parent_procedure_id,
+            archived: args.archived,
+            created_at: args.created_at,
+            updated_at: args.updated_at,
             page_size: args.page_size,
           },
           args.page

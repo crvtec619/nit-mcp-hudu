@@ -9,7 +9,7 @@ export function register(server: McpServer, env: Env) {
     "hudu_list_folders",
     {
       description:
-        "List folders in Hudu. Filter by company_id. Folders organize Knowledge Base articles and other content. Returns 25 per page.",
+        "List folders in Hudu. Folders are typed: 'article' (Knowledge Base folders) or 'photo' (photo folders). Filter by company_id, name, folder_type, or in_company. Returns 25 per page.",
       inputSchema: listFoldersSchema,
       annotations: {
         readOnlyHint: true,
@@ -25,6 +25,8 @@ export function register(server: McpServer, env: Env) {
           {
             name: args.name,
             company_id: args.company_id,
+            in_company: args.in_company,
+            folder_type: args.folder_type,
             page_size: args.page_size,
           },
           args.page
