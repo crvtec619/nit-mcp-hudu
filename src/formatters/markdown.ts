@@ -16,12 +16,8 @@ import type {
   HuduVlan,
   HuduMagicDash,
   HuduList,
-  HuduRack,
-  HuduRackStorageItem,
   HuduPasswordFolder,
   HuduUpload,
-  HuduCard,
-  HuduMatcher,
   HuduAppInfo,
   HuduPagedResponse,
 } from "../types";
@@ -425,36 +421,38 @@ export function formatRelationList(paged: HuduPagedResponse<HuduRelation>): stri
   ].join("\n");
 }
 
-// ---- Networks (Phase 3) ----
+// ---- Networks ----
+// /networks and /ip_addresses return ALL records in one response, so these
+// formatters take a plain array (not a paged wrapper).
 
-export function formatNetworkList(paged: HuduPagedResponse<HuduNetwork>): string {
-  if (paged.records.length === 0) return "No networks found.";
+export function formatNetworkList(records: HuduNetwork[]): string {
+  if (records.length === 0) return "No networks found.";
 
-  const rows = paged.records.map(
-    (n) => `| ${n.id} | ${esc(n.name)} | ${esc(n.address)} | ${esc(n.cidr)} | ${esc(n.network_type)} |`
+  const rows = records.map(
+    (n) => `| ${n.id} | ${esc(n.name)} | ${esc(n.address)} | ${n.network_type ?? "-"} | ${n.company_id} | ${n.vlan_id ?? "-"} |`
   );
 
   return [
-    pageInfo(paged),
+    `**${records.length} networks**`,
     "",
-    "| ID | Name | Address | CIDR | Type |",
-    "|---|---|---|---|---|",
+    "| ID | Name | Address | Type | Company ID | VLAN ID |",
+    "|---|---|---|---|---|---|",
     ...rows,
   ].join("\n");
 }
 
-export function formatIpAddressList(paged: HuduPagedResponse<HuduIpAddress>): string {
-  if (paged.records.length === 0) return "No IP addresses found.";
+export function formatIpAddressList(records: HuduIpAddress[]): string {
+  if (records.length === 0) return "No IP addresses found.";
 
-  const rows = paged.records.map(
-    (ip) => `| ${ip.id} | ${esc(ip.address)} | ${esc(ip.fqdn)} | ${esc(ip.status)} | ${truncate(ip.description, 60)} |`
+  const rows = records.map(
+    (ip) => `| ${ip.id} | ${esc(ip.address)} | ${esc(ip.status)} | ${esc(ip.asset_name)} | ${ip.asset_id ?? "-"} | ${truncate(ip.description, 60)} |`
   );
 
   return [
-    pageInfo(paged),
+    `**${records.length} IP addresses**`,
     "",
-    "| ID | Address | FQDN | Status | Description |",
-    "|---|---|---|---|---|",
+    "| ID | Address | Status | Asset | Asset ID | Description |",
+    "|---|---|---|---|---|---|",
     ...rows,
   ].join("\n");
 }
@@ -487,11 +485,17 @@ export function formatNetworkDetail(n: HuduNetwork): string {
     `| Name | ${esc(n.name) || "-"} |`,
     `| Company ID | ${n.company_id ?? "-"} |`,
     `| Address | ${esc(n.address) || "-"} |`,
-    `| CIDR | ${esc(n.cidr) || "-"} |`,
-    `| Type | ${esc(n.network_type) || "-"} |`,
+    `| Type | ${n.network_type ?? "-"} |`,
+    `| VLAN ID | ${n.vlan_id ?? "-"} |`,
+    `| Location ID | ${n.location_id ?? "-"} |`,
+    `| Status (list item) | ${n.status_list_item_id ?? "-"} |`,
+    `| Role (list item) | ${n.role_list_item_id ?? "-"} |`,
+    `| Hudu URL | ${esc(n.url) || "-"} |`,
+    `| Archived | ${n.archived_at ?? "No"} |`,
     `| Created | ${n.created_at ?? ""} |`,
     `| Updated | ${n.updated_at ?? ""} |`,
     ...(n.description ? ["", "## Description", "", truncate(n.description, 2000)] : []),
+    ...(n.notes ? ["", "## Notes", "", truncate(n.notes, 2000)] : []),
   ].join("\n");
 }
 
@@ -505,11 +509,15 @@ export function formatIpAddressDetail(ip: HuduIpAddress): string {
     `| Address | ${esc(ip.address) || "-"} |`,
     `| Company ID | ${ip.company_id ?? "-"} |`,
     `| Status | ${esc(ip.status) || "-"} |`,
+    `| Asset | ${esc(ip.asset_name) || "-"} (ID: ${ip.asset_id ?? "-"}) |`,
+    `| Asset URL | ${esc(ip.asset_url) || "-"} |`,
     `| FQDN | ${esc(ip.fqdn) || "-"} |`,
-    `| NAT Address | ${esc(ip.nat_address) || "-"} |`,
+    `| Hudu URL | ${esc(ip.url) || "-"} |`,
+    `| Discarded | ${ip.discarded_at ?? "No"} |`,
     `| Created | ${ip.created_at ?? ""} |`,
     `| Updated | ${ip.updated_at ?? ""} |`,
     ...(ip.description ? ["", "## Description", "", truncate(ip.description, 2000)] : []),
+    ...(ip.notes ? ["", "## Notes", "", truncate(ip.notes, 2000)] : []),
   ].join("\n");
 }
 
@@ -519,13 +527,13 @@ export function formatListList(paged: HuduPagedResponse<HuduList>): string {
   if (paged.records.length === 0) return "No lists found.";
 
   const rows = paged.records.map(
-    (l) => `| ${l.id} | ${esc(l.name)} | ${l.list_options?.length ?? "-"} | ${l.updated_at ?? ""} |`
+    (l) => `| ${l.id} | ${esc(l.name)} | ${l.list_items?.length ?? "-"} | ${l.updated_at ?? ""} |`
   );
 
   return [
     pageInfo(paged),
     "",
-    "| ID | Name | Options | Updated |",
+    "| ID | Name | Items | Updated |",
     "|---|---|---|---|",
     ...rows,
   ].join("\n");
@@ -547,73 +555,16 @@ export function formatListDetail(l: HuduList): string {
     lines.push("", "## Description", "", truncate(l.description, 2000));
   }
 
-  if (l.list_options && l.list_options.length > 0) {
-    lines.push("", "## Options", "");
-    lines.push("| Position | ID | Name |");
-    lines.push("|---|---|---|");
-    const sorted = [...l.list_options].sort(
-      (a, b) => (a.position ?? 0) - (b.position ?? 0)
-    );
-    for (const o of sorted) {
-      lines.push(`| ${o.position ?? "-"} | ${o.id} | ${esc(o.name)} |`);
+  if (l.list_items && l.list_items.length > 0) {
+    lines.push("", "## Items", "");
+    lines.push("| ID | Name |");
+    lines.push("|---|---|");
+    for (const item of l.list_items) {
+      lines.push(`| ${item.id} | ${esc(item.name)} |`);
     }
   }
 
   return lines.join("\n");
-}
-
-// ---- Racks ----
-
-export function formatRackList(paged: HuduPagedResponse<HuduRack>): string {
-  if (paged.records.length === 0) return "No racks found.";
-
-  const rows = paged.records.map(
-    (r) => `| ${r.id} | ${esc(r.name)} | ${r.company_id ?? "-"} | ${r.location_id ?? "-"} | ${r.height ?? "-"}U | ${r.width ?? "-"} |`
-  );
-
-  return [
-    pageInfo(paged),
-    "",
-    "| ID | Name | Company ID | Location ID | Height | Width |",
-    "|---|---|---|---|---|---|",
-    ...rows,
-  ].join("\n");
-}
-
-export function formatRackDetail(r: HuduRack): string {
-  return [
-    `# Rack: ${esc(r.name)}`,
-    "",
-    "| Field | Value |",
-    "|---|---|",
-    `| ID | ${r.id} |`,
-    `| Name | ${esc(r.name)} |`,
-    `| Company ID | ${r.company_id ?? "-"} |`,
-    `| Location ID | ${r.location_id ?? "-"} |`,
-    `| Height (U) | ${r.height ?? "-"} |`,
-    `| Width | ${r.width ?? "-"} |`,
-    `| Starting Unit | ${r.starting_unit ?? "-"} |`,
-    `| Numbering | ${r.numbering_ascending === null ? "-" : r.numbering_ascending ? "Ascending" : "Descending"} |`,
-    `| Created | ${r.created_at ?? ""} |`,
-    `| Updated | ${r.updated_at ?? ""} |`,
-    ...(r.description ? ["", "## Description", "", truncate(r.description, 2000)] : []),
-  ].join("\n");
-}
-
-export function formatRackStorageItemList(paged: HuduPagedResponse<HuduRackStorageItem>): string {
-  if (paged.records.length === 0) return "No rack storage items found.";
-
-  const rows = paged.records.map(
-    (i) => `| ${i.id} | ${i.rack_storage_id} | ${esc(i.name)} | ${i.asset_id ?? "-"} | ${i.start_unit ?? "-"}-${i.end_unit ?? "-"} | ${i.units ?? "-"} | ${esc(i.side) || "-"} | ${esc(i.status) || "-"} |`
-  );
-
-  return [
-    pageInfo(paged),
-    "",
-    "| ID | Rack ID | Name | Asset ID | Units | Size | Side | Status |",
-    "|---|---|---|---|---|---|---|---|",
-    ...rows,
-  ].join("\n");
 }
 
 // ---- Password Folders ----
@@ -640,49 +591,13 @@ export function formatUploadList(paged: HuduPagedResponse<HuduUpload>): string {
   if (paged.records.length === 0) return "No uploads found.";
 
   const rows = paged.records.map(
-    (u) => `| ${u.id} | ${esc(u.name)} | ${esc(u.uploadable_type)}#${u.uploadable_id ?? "-"} | ${esc(u.content_type) || "-"} | ${u.size ?? "-"} |`
+    (u) => `| ${u.id} | ${esc(u.name)} | ${esc(u.uploadable_type)}#${u.uploadable_id ?? "-"} | ${esc(u.mime) || "-"} | ${esc(u.size) || "-"} | ${esc(u.created_date) || "-"} |`
   );
 
   return [
     pageInfo(paged),
     "",
-    "| ID | Name | Parent | Content Type | Size (bytes) |",
-    "|---|---|---|---|---|",
-    ...rows,
-  ].join("\n");
-}
-
-// ---- Cards ----
-
-export function formatCardList(paged: HuduPagedResponse<HuduCard>): string {
-  if (paged.records.length === 0) return "No integration cards found.";
-
-  const rows = paged.records.map(
-    (c) => `| ${c.id} | ${esc(c.integrator_name)} | ${c.integrator_id ?? "-"} | ${esc(c.sync_id)} | ${esc(c.sync_type)} | ${esc(c.name)} |`
-  );
-
-  return [
-    pageInfo(paged),
-    "",
-    "| ID | Integrator | Integrator ID | Sync ID | Sync Type | Name |",
-    "|---|---|---|---|---|---|",
-    ...rows,
-  ].join("\n");
-}
-
-// ---- Matchers ----
-
-export function formatMatcherList(paged: HuduPagedResponse<HuduMatcher>): string {
-  if (paged.records.length === 0) return "No integration matchers found.";
-
-  const rows = paged.records.map(
-    (m) => `| ${m.id} | ${esc(m.integrator_name)} | ${esc(m.identifier)} | ${m.matched ? "Yes" : "No"} | ${m.company_id ?? "-"} | ${m.potential_company_id ?? "-"} |`
-  );
-
-  return [
-    pageInfo(paged),
-    "",
-    "| ID | Integrator | Identifier | Matched | Company ID | Potential ID |",
+    "| ID | Name | Parent | MIME | Size | Created |",
     "|---|---|---|---|---|---|",
     ...rows,
   ].join("\n");

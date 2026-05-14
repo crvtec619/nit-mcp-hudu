@@ -155,13 +155,11 @@ export const listRelationsSchema = z.object({
 });
 
 // ---- Networks / IPAM ----
+// Note: /networks and /ip_addresses return ALL records in one response and
+// reject ?page= with HTTP 400. No pagination params here.
 
 export const listNetworksSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter networks by company ID"),
-  name: z.string().optional().describe("Filter networks by exact name"),
-  address: z.string().optional().describe("Filter by network address (e.g. '10.0.0.0')"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });
 
 export const getNetworkSchema = z.object({
@@ -172,10 +170,7 @@ export const listIpAddressesSchema = z.object({
   company_id: z.coerce.number().int().positive().optional().describe("Filter IP addresses by company ID"),
   network_id: z.coerce.number().int().positive().optional().describe("Filter IPs by parent network ID"),
   address: z.string().optional().describe("Filter by exact IP address"),
-  status: z.string().optional().describe("Filter by status (e.g. 'assigned', 'available', 'reserved')"),
-  fqdn: z.string().optional().describe("Filter by FQDN"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (25 results per page, default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
+  status: z.string().optional().describe("Filter by status (e.g. 'Assigned', 'Available', 'Reserved')"),
 });
 
 export const getIpAddressSchema = z.object({
@@ -199,27 +194,6 @@ export const getListSchema = z.object({
   list_id: z.coerce.number().int().positive().describe("The ID of the list to retrieve (includes list_options)"),
 });
 
-// ---- Racks ----
-
-export const listRacksSchema = z.object({
-  company_id: z.coerce.number().int().positive().optional().describe("Filter racks by company ID"),
-  location_id: z.coerce.number().int().positive().optional().describe("Filter racks by location ID"),
-  name: z.string().optional().describe("Filter racks by name"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
-});
-
-export const getRackSchema = z.object({
-  rack_id: z.coerce.number().int().positive().describe("The ID of the rack to retrieve"),
-});
-
-export const listRackStorageItemsSchema = z.object({
-  rack_storage_id: z.coerce.number().int().positive().optional().describe("Filter items by parent rack storage ID"),
-  asset_id: z.coerce.number().int().positive().optional().describe("Filter items by associated asset ID"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
-});
-
 // ---- Password Folders ----
 // Folder structure only. asset_passwords list/get is intentionally NOT exposed;
 // the API key is provisioned without password access.
@@ -236,27 +210,6 @@ export const listPasswordFoldersSchema = z.object({
 export const listUploadsSchema = z.object({
   uploadable_type: z.string().optional().describe("Filter by parent record type (e.g. 'Asset', 'Article', 'Company')"),
   uploadable_id: z.coerce.number().int().positive().optional().describe("Filter by parent record ID (must be paired with uploadable_type)"),
-  archived: z.boolean().optional().describe("Filter by archived status"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
-});
-
-// ---- Cards (integration sync objects) ----
-
-export const listCardsSchema = z.object({
-  integrator_id: z.coerce.number().int().positive().optional().describe("Filter cards by integrator ID"),
-  integrator_name: z.string().optional().describe("Filter by integrator name (e.g. 'HaloPSA', 'ConnectWise')"),
-  sync_id: z.string().optional().describe("Filter by external sync ID (the integrator's record ID)"),
-  page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
-  page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
-});
-
-// ---- Matchers (integration company matchers) ----
-
-export const listMatchersSchema = z.object({
-  integrator_id: z.coerce.number().int().positive().optional().describe("Filter matchers by integrator ID"),
-  matched: z.boolean().optional().describe("Filter by match status (true = matched, false = unmatched candidates)"),
-  company_id: z.coerce.number().int().positive().optional().describe("Filter by matched Hudu company ID"),
   page: z.coerce.number().min(1).default(1).describe("Page number (default 1)"),
   page_size: z.coerce.number().min(1).max(1000).optional().describe("Number of results per page (default 25)"),
 });

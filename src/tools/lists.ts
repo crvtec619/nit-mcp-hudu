@@ -53,8 +53,7 @@ export function register(server: McpServer, env: Env) {
     },
     async (args) => {
       try {
-        const raw = await huduFetch<{ list: HuduList }>(env, `lists/${args.list_id}`);
-        const list = raw.list ?? (raw as unknown as HuduList);
+        const list = await huduFetch<HuduList>(env, `lists/${args.list_id}`);
 
         return {
           content: [{ type: "text" as const, text: formatListDetail(list) }],

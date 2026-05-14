@@ -302,29 +302,49 @@ export interface HuduMagicDash {
 }
 
 // ---- Networks ----
+// Verified shape from GET /networks/:id (2026-05-13). network_type is a numeric
+// enum, not a string. /networks does NOT accept ?page=.
 
 export interface HuduNetwork {
   id: number;
   company_id: number;
   name: string | null;
   address: string | null;
-  network_type: string | null;
-  cidr: string | null;
+  network_type: number | null;
+  slug: string | null;
+  location_id: number | null;
   description: string | null;
+  notes: string | null;
+  ancestry: string | null;
+  settings: Record<string, unknown> | null;
+  sync_identifier: string | null;
+  is_radar: boolean | null;
+  status_list_item_id: number | null;
+  role_list_item_id: number | null;
+  vlan_id: number | null;
+  url: string | null;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
 // ---- IP Addresses ----
+// Verified shape from GET /ip_addresses/:id (2026-05-13). /ip_addresses does
+// NOT accept ?page=.
 
 export interface HuduIpAddress {
   id: number;
   company_id: number;
   address: string | null;
   status: string | null;
+  asset_id: number | null;
+  asset_name: string | null;
+  asset_url: string | null;
+  notes: string | null;
   description: string | null;
   fqdn: string | null;
-  nat_address: string | null;
+  url: string | null;
+  discarded_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -359,97 +379,39 @@ export interface HuduPasswordFolder {
 
 // ---- Lists ----
 // Hudu Admin > Lists. Used as the source of options for ListSelect layout fields.
-// GET /lists returns list metadata; GET /lists/:id returns the list with its
-// list_options inline (verified shape may vary by Hudu version).
+// GET /lists returns lists with `list_items` inline (verified 2026-05-13).
 
-export interface HuduListOption {
+export interface HuduListItem {
   id: number;
   name: string;
-  position: number | null;
 }
 
 export interface HuduList {
   id: number;
   name: string;
-  description: string | null;
-  list_options?: HuduListOption[];
-  created_at: string;
-  updated_at: string;
-}
-
-// ---- Racks ----
-
-export interface HuduRack {
-  id: number;
-  company_id: number;
-  location_id: number | null;
-  name: string;
-  description: string | null;
-  height: number | null;
-  width: number | null;
-  starting_unit: number | null;
-  numbering_ascending: boolean | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface HuduRackStorageItem {
-  id: number;
-  rack_storage_id: number;
-  asset_id: number | null;
-  name: string | null;
-  description: string | null;
-  status: string | null;
-  start_unit: number | null;
-  end_unit: number | null;
-  units: number | null;
-  side: string | null;
+  description?: string | null;
+  list_items?: HuduListItem[];
   created_at: string;
   updated_at: string;
 }
 
 // ---- Uploads ----
+// Verified shape from GET /uploads/:id (2026-05-13). `size` is a human-readable
+// string (e.g. "61.8 KB"), `mime` is the content type, `created_date` is a
+// formatted string. No updated_at; archival is via archived_at timestamp.
 
 export interface HuduUpload {
   id: number;
-  uploadable_type: string | null;
-  uploadable_id: number | null;
-  name: string | null;
+  slug: string | null;
   url: string | null;
-  content_type: string | null;
-  size: number | null;
-  archived: boolean | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// ---- Cards (integration sync objects) ----
-
-export interface HuduCard {
-  id: number;
-  integrator_id: number | null;
-  integrator_name: string | null;
-  sync_id: string | null;
-  sync_type: string | null;
   name: string | null;
-  data: unknown;
-  created_at: string;
-  updated_at: string;
-}
-
-// ---- Matchers (integration object matchers) ----
-
-export interface HuduMatcher {
-  id: number;
-  integrator_id: number | null;
-  integrator_name: string | null;
-  matched: boolean | null;
-  identifier: string | null;
-  company_id: number | null;
-  potential_company_id: number | null;
-  sync_id: string | null;
-  created_at: string;
-  updated_at: string;
+  ext: string | null;
+  mime: string | null;
+  size: string | null;
+  created_date: string | null;
+  archived_at: string | null;
+  uploadable_id: number | null;
+  uploadable_type: string | null;
 }
 
 // ---- App Info ----
