@@ -133,7 +133,18 @@ app.get("/authorize", async (c) => {
   const clientId = getRequiredEnv(c.env, "ENTRA_CLIENT_ID");
   const clientSecret = getRequiredEnv(c.env, "ENTRA_CLIENT_SECRET");
 
-  const oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  // parseAuthRequest throws on missing/malformed OAuth query params. Treat
+  // that as a 400 (caller error) rather than a 500 (server bug) so direct
+  // browser hits and stale-bookmark probes don't pollute exception metrics.
+  let oauthReqInfo;
+  try {
+    oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  } catch {
+    return c.text(
+      "This URL is part of the OAuth sign-in flow. Open Hudu through your MCP client (Claude Desktop or Claude Code) instead.",
+      400
+    );
+  }
   if (!oauthReqInfo.clientId) {
     return c.text("Invalid OAuth request", 400);
   }
