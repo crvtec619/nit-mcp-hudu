@@ -15,6 +15,9 @@ import { register as registerLists } from "./lists";
 import { register as registerNetworks } from "./networks";
 import { register as registerPasswordFolders } from "./password-folders";
 import { register as registerIntegrations } from "./integrations";
+import { register as registerFlags } from "./flags";
+import { register as registerVlans } from "./vlans";
+import { register as registerProcedureTasks } from "./procedure-tasks";
 
 export function registerAllTools(server: McpServer, env: Env) {
   // Phase 1: Read-only tools for QBR automation and cross-reference
@@ -39,6 +42,13 @@ export function registerAllTools(server: McpServer, env: Env) {
   registerNetworks(server, env);
   registerPasswordFolders(server, env);
   registerIntegrations(server, env);
+
+  // Phase 1.6: Flags, VLANs (+ Zones), Procedure Tasks. Sourced from the
+  // canonical Hudu swagger (2.41.2). See PR description for filter-enhancement
+  // changes to folders, procedures, users, groups, articles, lists.
+  registerFlags(server, env);
+  registerVlans(server, env);
+  registerProcedureTasks(server, env);
 
   // Phase 2: Write tools (create/update assets & articles, magic dash writes on local-dev)
 }
