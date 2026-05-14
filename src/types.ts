@@ -342,7 +342,115 @@ export interface HuduVlan {
 }
 
 // ---- Passwords ----
-// Not included in Phase 1 scope. API key is configured without password access.
+// asset_passwords list/get not included; API key is configured without password
+// access. password_folders (folder structure only, no credentials) is exposed.
+
+export interface HuduPasswordFolder {
+  id: number;
+  name: string;
+  description: string | null;
+  company_id: number | null;
+  parent_password_folder_id: number | null;
+  allowed_groups: unknown[] | null;
+  allowed_users: unknown[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Lists ----
+// Hudu Admin > Lists. Used as the source of options for ListSelect layout fields.
+// GET /lists returns list metadata; GET /lists/:id returns the list with its
+// list_options inline (verified shape may vary by Hudu version).
+
+export interface HuduListOption {
+  id: number;
+  name: string;
+  position: number | null;
+}
+
+export interface HuduList {
+  id: number;
+  name: string;
+  description: string | null;
+  list_options?: HuduListOption[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Racks ----
+
+export interface HuduRack {
+  id: number;
+  company_id: number;
+  location_id: number | null;
+  name: string;
+  description: string | null;
+  height: number | null;
+  width: number | null;
+  starting_unit: number | null;
+  numbering_ascending: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HuduRackStorageItem {
+  id: number;
+  rack_storage_id: number;
+  asset_id: number | null;
+  name: string | null;
+  description: string | null;
+  status: string | null;
+  start_unit: number | null;
+  end_unit: number | null;
+  units: number | null;
+  side: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Uploads ----
+
+export interface HuduUpload {
+  id: number;
+  uploadable_type: string | null;
+  uploadable_id: number | null;
+  name: string | null;
+  url: string | null;
+  content_type: string | null;
+  size: number | null;
+  archived: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Cards (integration sync objects) ----
+
+export interface HuduCard {
+  id: number;
+  integrator_id: number | null;
+  integrator_name: string | null;
+  sync_id: string | null;
+  sync_type: string | null;
+  name: string | null;
+  data: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---- Matchers (integration object matchers) ----
+
+export interface HuduMatcher {
+  id: number;
+  integrator_id: number | null;
+  integrator_name: string | null;
+  matched: boolean | null;
+  identifier: string | null;
+  company_id: number | null;
+  potential_company_id: number | null;
+  sync_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 // ---- App Info ----
 
