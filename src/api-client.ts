@@ -45,6 +45,17 @@ function safeJsonParse<T>(text: string, endpoint: string): T {
 }
 
 /**
+ * Build an error message that surfaces the Hudu API's own response body (e.g.
+ * 422 validation details), which is far more useful than a generic hint. Body
+ * is trimmed to keep the message bounded.
+ */
+function apiErrorMessage(label: string, status: number, body: string): string {
+  const trimmed = body.trim();
+  const detail = trimmed ? `: ${trimmed.slice(0, 500)}` : "";
+  return `Hudu API ${label} failed (${status})${detail}`;
+}
+
+/**
  * Make a GET request to the Hudu API.
  * Hudu uses a static x-api-key header (no OAuth token flow).
  */
@@ -88,9 +99,7 @@ export async function huduFetch<T>(
   }
 
   if (!response.ok) {
-    throw new Error(
-      `Hudu API request failed (${response.status}) for ${endpoint}. Check the resource ID and try again.`
-    );
+    throw new Error(apiErrorMessage(`GET ${endpoint}`, response.status, text));
   }
 
   return safeJsonParse<T>(text, endpoint);
@@ -134,9 +143,7 @@ export async function huduMutate<T>(
   }
 
   if (!response.ok) {
-    throw new Error(
-      `Hudu API request failed (${response.status}) for ${method} ${endpoint}. Check the resource ID and try again.`
-    );
+    throw new Error(apiErrorMessage(`${method} ${endpoint}`, response.status, text));
   }
 
   if (!text || text.trim() === "") {

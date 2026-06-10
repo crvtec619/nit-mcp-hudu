@@ -30,11 +30,23 @@ Hudu MCP Server for Cloudflare Workers. Part of Networkz IT's integration platfo
 - `npm run build` - TypeScript compilation
 - `npm run deploy` - Deploy to Cloudflare
 - `npm run typecheck` - Type check without emit
+- `npm run local` - Run the local stdio write connector via tsx (reads `.env.local`)
+- `npm run typecheck:local` - Type check the local connector tree (`tsconfig.local.json`)
+
+## Local write connector (`src/local/`)
+- Stdio MCP server for create/edit against Hudu, launched from Windows via WSL. The
+  Cloudflare worker (`src/index.ts`, OAuth/Entra) is retired in favor of Hudu's built-in
+  MCP for reads; this connector covers writes and is never deployed to the worker.
+- Reuses the worker's read tools, `huduMutate`, formatters, types, and schemas. Write
+  tools live under `src/local/tools/`; no delete tools by design.
+- Safety: every write is appended to a JSONL audit log (`HUDU_AUDIT_LOG`, default
+  `./audit/hudu-writes.jsonl`); optional `HUDU_WRITE_ALLOWLIST` (company IDs) restricts
+  company-scoped writes. Write endpoints/body shapes are unverified (no public API docs);
+  confirm against the in-instance Swagger.
 
 ## Phases
-- Phase 1 (current): 17 read-only tools (companies, assets, articles, expirations, etc.)
-- Phase 2 (next): Write tools (create/update assets, articles, Magic Dash)
-- Phase 3 (future): Network documentation tools (IPs, networks, VLANs)
+- Phase 1: read-only tools on the worker (companies, assets, articles, expirations, etc.)
+- Phase 2: write tools delivered via the local connector (`src/local/`), not the worker
 
 ## Sibling Project
 - `nit-mcp-halo-proj01` - HaloPSA MCP server, same architecture pattern

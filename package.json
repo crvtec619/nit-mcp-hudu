@@ -11,7 +11,9 @@
     "build": "tsc",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:local": "tsc --noEmit -p tsconfig.local.json",
+    "local": "tsx src/local/index.ts"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.6.0",
@@ -21,6 +23,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260528.1",
+    "@types/node": "^22.10.0",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "wrangler": "^4.95.0"
   }

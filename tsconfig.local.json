@@ -1,0 +1,16 @@
+{
+  // Typecheck config for the local stdio write connector (src/local).
+  // The connector runs via `tsx` (npm run local); this config exists so
+  // `npm run typecheck:local` validates the Node-targeted local tree, which
+  // uses Node globals (process, fs) absent from the Workers build.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "@cloudflare/workers-types"],
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false
+  },
+  "include": ["src/**/*.ts", "env.d.ts"],
+  "exclude": ["node_modules", "dist", "src/index.ts", "src/auth-handler.ts"]
+}

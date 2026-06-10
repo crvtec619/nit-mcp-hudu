@@ -383,3 +383,253 @@ export const createRelationSchema = z.object({
   toable_id: z.coerce.number().int().positive().describe("Target entity ID"),
   description: z.string().optional().describe("Description of the relationship"),
 });
+
+// ---- Asset Layouts (write) ----
+
+const assetLayoutFieldSchema = z.object({
+  label: z.string().describe("Field label shown on the asset"),
+  field_type: z.string().describe(
+    "Field type. Common values: Text, RichText, Heading, CheckBox, Website, Number, Date, Email, Phone, ListSelect, AssetTag, Embed, Password."
+  ),
+  position: z.coerce.number().int().min(0).optional().describe("Display order (0-based)"),
+  required: z.boolean().optional().describe("Whether the field is required"),
+  show_in_list: z.boolean().optional().describe("Show this field in list views"),
+  hint: z.string().optional().describe("Help text shown under the field"),
+  options: z.string().optional().describe("For ListSelect: comma-separated options, or a list name"),
+  expiration: z.boolean().optional().describe("Treat a Date field as an expiration date"),
+});
+
+export const createAssetLayoutSchema = z.object({
+  name: z.string().describe("Asset layout (template) name"),
+  icon: z.string().optional().describe("FontAwesome icon class (e.g. 'fas fa-server')"),
+  color: z.string().optional().describe("Header color hex (e.g. '#0078d4')"),
+  icon_color: z.string().optional().describe("Icon color hex"),
+  include_passwords: z.boolean().optional().describe("Allow related passwords on this layout"),
+  include_photos: z.boolean().optional().describe("Allow photos on this layout"),
+  include_comments: z.boolean().optional().describe("Allow comments on this layout"),
+  include_files: z.boolean().optional().describe("Allow file attachments on this layout"),
+  fields: z.array(assetLayoutFieldSchema).min(1).describe("Field definitions for the layout"),
+});
+
+export const updateAssetLayoutSchema = z.object({
+  asset_layout_id: z.coerce.number().int().positive().describe("The ID of the asset layout to update"),
+  name: z.string().optional().describe("Updated layout name"),
+  icon: z.string().optional().describe("Updated FontAwesome icon class"),
+  color: z.string().optional().describe("Updated header color hex"),
+  icon_color: z.string().optional().describe("Updated icon color hex"),
+  active: z.boolean().optional().describe("Activate or deactivate the layout"),
+  fields: z.array(assetLayoutFieldSchema).optional().describe(
+    "Full replacement set of field definitions. Omit to leave fields unchanged. Include existing fields you want to keep."
+  ),
+});
+
+// ---- Networks (write) ----
+
+export const createNetworkSchema = z.object({
+  company_id: z.coerce.number().int().positive().describe("Company ID the network belongs to (required)"),
+  name: z.string().describe("Network name"),
+  address: z.string().describe("Network address in CIDR notation (e.g. '10.0.0.0/24')"),
+  network_type: z.coerce.number().int().optional().describe("Numeric network type enum (verify values in Hudu)"),
+  description: z.string().optional().describe("Network description"),
+  notes: z.string().optional().describe("Freeform notes"),
+  vlan_id: z.coerce.number().int().positive().optional().describe("Associated VLAN record ID (Hudu internal id, not the 802.1Q number)"),
+});
+
+export const updateNetworkSchema = z.object({
+  network_id: z.coerce.number().int().positive().describe("The ID of the network to update"),
+  company_id: z.coerce.number().int().positive().describe("Company ID the network belongs to (for write-scope check)"),
+  name: z.string().optional().describe("Updated network name"),
+  address: z.string().optional().describe("Updated CIDR address"),
+  network_type: z.coerce.number().int().optional().describe("Updated numeric network type enum"),
+  description: z.string().optional().describe("Updated description"),
+  notes: z.string().optional().describe("Updated notes"),
+  vlan_id: z.coerce.number().int().positive().optional().describe("Updated associated VLAN record ID"),
+});
+
+// ---- IP Addresses (write) ----
+
+export const createIpAddressSchema = z.object({
+  company_id: z.coerce.number().int().positive().describe("Company ID the IP belongs to (required)"),
+  address: z.string().describe("IP address (e.g. '10.0.0.5')"),
+  status: z.string().optional().describe("Status (e.g. 'assigned', 'reserved', 'unassigned')"),
+  fqdn: z.string().optional().describe("Fully qualified domain name"),
+  description: z.string().optional().describe("Description"),
+  notes: z.string().optional().describe("Freeform notes"),
+  asset_id: z.coerce.number().int().positive().optional().describe("Asset ID this IP is assigned to"),
+});
+
+export const updateIpAddressSchema = z.object({
+  ip_address_id: z.coerce.number().int().positive().describe("The ID of the IP address record to update"),
+  company_id: z.coerce.number().int().positive().describe("Company ID the IP belongs to (for write-scope check)"),
+  address: z.string().optional().describe("Updated IP address"),
+  status: z.string().optional().describe("Updated status"),
+  fqdn: z.string().optional().describe("Updated FQDN"),
+  description: z.string().optional().describe("Updated description"),
+  notes: z.string().optional().describe("Updated notes"),
+  asset_id: z.coerce.number().int().positive().optional().describe("Updated assigned asset ID"),
+});
+
+// ---- VLANs (write) ----
+
+export const createVlanSchema = z.object({
+  company_id: z.coerce.number().int().positive().describe("Company ID the VLAN belongs to (required)"),
+  name: z.string().describe("VLAN name"),
+  vlan_id: z.coerce.number().int().min(1).max(4094).describe("802.1Q VLAN number (1-4094)"),
+  description: z.string().optional().describe("VLAN description"),
+  notes: z.string().optional().describe("Freeform notes"),
+  vlan_zone_id: z.coerce.number().int().positive().optional().describe("VLAN zone record ID this VLAN belongs to"),
+});
+
+export const updateVlanSchema = z.object({
+  vlan_record_id: z.coerce.number().int().positive().describe("The Hudu record ID of the VLAN to update (not the 802.1Q number)"),
+  company_id: z.coerce.number().int().positive().describe("Company ID the VLAN belongs to (for write-scope check)"),
+  name: z.string().optional().describe("Updated VLAN name"),
+  vlan_id: z.coerce.number().int().min(1).max(4094).optional().describe("Updated 802.1Q VLAN number (1-4094)"),
+  description: z.string().optional().describe("Updated description"),
+  notes: z.string().optional().describe("Updated notes"),
+  vlan_zone_id: z.coerce.number().int().positive().optional().describe("Updated VLAN zone record ID"),
+});
+
+// ---- VLAN Zones (write) ----
+
+export const createVlanZoneSchema = z.object({
+  company_id: z.coerce.number().int().positive().describe("Company ID the VLAN zone belongs to (required)"),
+  name: z.string().describe("VLAN zone name (e.g. a datacenter or building)"),
+  description: z.string().optional().describe("Zone description"),
+  vlan_id_ranges: z.string().optional().describe("Allowed VLAN number ranges, e.g. '100-500,1000-1500'"),
+});
+
+export const updateVlanZoneSchema = z.object({
+  vlan_zone_id: z.coerce.number().int().positive().describe("The ID of the VLAN zone to update"),
+  company_id: z.coerce.number().int().positive().describe("Company ID the VLAN zone belongs to (for write-scope check)"),
+  name: z.string().optional().describe("Updated zone name"),
+  description: z.string().optional().describe("Updated description"),
+  vlan_id_ranges: z.string().optional().describe("Updated VLAN number ranges"),
+});
+
+// ---- Folders (write) ----
+
+export const createFolderSchema = z.object({
+  name: z.string().describe("Folder name"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID. Omit for a global (Knowledge Base) folder."),
+  parent_folder_id: z.coerce.number().int().positive().optional().describe("Parent folder ID to nest under. Omit for a top-level folder."),
+  icon: z.string().optional().describe("FontAwesome icon class (e.g. 'fas fa-folder')"),
+  description: z.string().optional().describe("Folder description"),
+});
+
+export const updateFolderSchema = z.object({
+  folder_id: z.coerce.number().int().positive().describe("The ID of the folder to update"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID the folder belongs to (for write-scope check, when known)"),
+  name: z.string().optional().describe("Updated folder name"),
+  parent_folder_id: z.union([z.coerce.number().int().positive(), z.null()]).optional().describe(
+    "Reparent the folder: set to a folder ID to move under it, or null to move to the top level. Omit to leave the parent unchanged."
+  ),
+  icon: z.string().optional().describe("Updated FontAwesome icon class"),
+  description: z.string().optional().describe("Updated description"),
+});
+
+// ---- Lists (write) ----
+
+export const createListSchema = z.object({
+  name: z.string().describe("List name"),
+  description: z.string().optional().describe("List description"),
+  items: z.array(z.string()).optional().describe("Initial list item names (the selectable options for ListSelect fields)"),
+});
+
+export const updateListSchema = z.object({
+  list_id: z.coerce.number().int().positive().describe("The ID of the list to update"),
+  name: z.string().optional().describe("Updated list name"),
+  description: z.string().optional().describe("Updated description"),
+  items: z.array(z.string()).optional().describe(
+    "Replacement set of list item names. Omit to leave items unchanged; include existing names you want to keep."
+  ),
+});
+
+// ---- Flags (write) ----
+
+export const createFlagSchema = z.object({
+  flag_type_id: z.coerce.number().int().positive().describe("Flag type ID (see hudu_list_flag_types)"),
+  flagable_type: z.string().describe("Record type to flag: Asset, Website, Article, Company, Procedure, Network, IpAddress, Vlan, VlanZone, etc."),
+  flagable_id: z.coerce.number().int().positive().describe("ID of the record to flag"),
+  description: z.string().optional().describe("Flag description / note"),
+});
+
+export const updateFlagSchema = z.object({
+  flag_id: z.coerce.number().int().positive().describe("The ID of the flag to update"),
+  flag_type_id: z.coerce.number().int().positive().optional().describe("Re-assign the flag to a different flag type"),
+  description: z.string().optional().describe("Updated flag description / note"),
+});
+
+export const deleteFlagSchema = z.object({
+  flag_id: z.coerce.number().int().positive().describe("The ID of the flag to remove (this is a deliberate exception to the no-delete rule; flags are lightweight and reversible)"),
+});
+
+// ---- Flag types (write) ----
+
+// Hudu flag-type color is a fixed palette NAME, not a hex value (hex 422s).
+// Confirmed live: Red, Orange, Yellow, Green, Blue, Purple, Grey ("Grey", not "Gray").
+const flagTypeColor = z.enum(["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Grey"]);
+
+export const createFlagTypeSchema = z.object({
+  name: z.string().describe("Flag type name (e.g. 'Outdated', 'Needs Review')"),
+  color: flagTypeColor.describe("Palette color name (NOT hex): Red, Orange, Yellow, Green, Blue, Purple, or Grey ('Grey', not 'Gray')."),
+});
+
+export const updateFlagTypeSchema = z.object({
+  flag_type_id: z.coerce.number().int().positive().describe("The ID of the flag type to update"),
+  name: z.string().optional().describe("Updated flag type name"),
+  color: flagTypeColor.optional().describe("Updated palette color name (NOT hex): Red, Orange, Yellow, Green, Blue, Purple, or Grey."),
+});
+
+// ---- Archive / unarchive (write) ----
+
+export const archiveAssetSchema = z.object({
+  company_id: z.coerce.number().int().positive().describe("Company ID the asset belongs to (required)"),
+  asset_id: z.coerce.number().int().positive().describe("Asset ID"),
+});
+
+export const archiveArticleSchema = z.object({
+  article_id: z.coerce.number().int().positive().describe("Article ID"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID (for write-scope check, when known)"),
+});
+
+export const archiveWebsiteSchema = z.object({
+  website_id: z.coerce.number().int().positive().describe("Website ID"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID (for write-scope check, when known)"),
+});
+
+// ---- Procedures + tasks (write) ----
+
+export const createProcedureSchema = z.object({
+  name: z.string().describe("Procedure (Process) name"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID. Omit for a global template."),
+  description: z.string().optional().describe("Procedure description"),
+});
+
+export const updateProcedureSchema = z.object({
+  procedure_id: z.coerce.number().int().positive().describe("The ID of the procedure to update"),
+  company_id: z.coerce.number().int().positive().optional().describe("Company ID (for write-scope check, when known)"),
+  name: z.string().optional().describe("Updated name"),
+  description: z.string().optional().describe("Updated description"),
+});
+
+export const createProcedureTaskSchema = z.object({
+  procedure_id: z.coerce.number().int().positive().describe("Parent procedure ID"),
+  name: z.string().describe("Task name"),
+  description: z.string().optional().describe("Task description"),
+  position: z.coerce.number().int().min(0).optional().describe("Order within the procedure"),
+  priority: z.string().optional().describe("Priority (e.g. low, normal, high)"),
+  due_date: z.string().optional().describe("Due date (ISO 8601)"),
+  optional: z.boolean().optional().describe("Whether the task is optional"),
+});
+
+export const updateProcedureTaskSchema = z.object({
+  procedure_task_id: z.coerce.number().int().positive().describe("The ID of the procedure task to update"),
+  name: z.string().optional().describe("Updated task name"),
+  description: z.string().optional().describe("Updated description"),
+  position: z.coerce.number().int().min(0).optional().describe("Updated order"),
+  priority: z.string().optional().describe("Updated priority"),
+  completed: z.boolean().optional().describe("Mark complete or incomplete"),
+  due_date: z.string().optional().describe("Updated due date (ISO 8601)"),
+  optional: z.boolean().optional().describe("Updated optional flag"),
+});
